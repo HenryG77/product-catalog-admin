@@ -53,8 +53,24 @@ interface Store {
   hoursText?: string
 }
 
+interface Banner {
+  id: string
+  image: string
+  title?: string
+  description?: string
+  link?: string
+  whatsappMessage?: string
+  isActive: boolean
+  order: number
+  categoryId?: string
+  category?: Category
+  storeId: string
+  createdAt: string
+  updatedAt: string
+}
+
 export default function AdminPanel() {
-  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'store'>('products')
+  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'store' | 'banners'>('products')
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [store, setStore] = useState<Store | null>(null)
@@ -123,6 +139,25 @@ export default function AdminPanel() {
   const [productImagePreview, setProductImagePreview] = useState<string>('')
   const [productImageFilename, setProductImageFilename] = useState<string>('')
 
+  // Banner states
+  const [banners, setBanners] = useState<Banner[]>([])
+  const [bannerForm, setBannerForm] = useState<Partial<Banner>>({
+    image: '',
+    title: '',
+    description: '',
+    link: '',
+    whatsappMessage: '',
+    categoryId: '',
+    isActive: true,
+    order: 0
+  })
+  const [editingBanner, setEditingBanner] = useState<string | null>(null)
+  const [bannerImageType, setBannerImageType] = useState<'url' | 'file'>('url')
+  const [bannerImageFile, setBannerImageFile] = useState<File | null>(null)
+  const [bannerImagePreview, setBannerImagePreview] = useState<string>('')
+  const [bannerImageFilename, setBannerImageFilename] = useState<string>('')
+  const [bannerToDelete, setBannerToDelete] = useState<string | null>(null)
+
   // Unsaved changes tracking
   const [hasChanges, setHasChanges] = useState(false)
   const [pendingTab, setPendingTab] = useState<'products' | 'categories' | 'store' | null>(null)
@@ -147,10 +182,11 @@ export default function AdminPanel() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const [productsRes, categoriesRes, storeRes] = await Promise.all([
+      const [productsRes, categoriesRes, storeRes, bannersRes] = await Promise.all([
         fetch('/api/products'),
         fetch('/api/categories'),
-        fetch('/api/store')
+        fetch('/api/store'),
+        fetch('/api/banners?all=true')
       ])
 
       if (productsRes.ok) {
@@ -184,6 +220,11 @@ export default function AdminPanel() {
             }
           }
         }
+      }
+
+      if (bannersRes.ok) {
+        const bannersData = await bannersRes.json()
+        setBanners(bannersData)
       }
     } catch (err) {
       setError('Error cargando datos')
@@ -568,6 +609,112 @@ export default function AdminPanel() {
     setProductImageFilename('')
   }
 
+  // Banner handlers
+  const handleBannerSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!store?.id) {
+      setError('No se encontró la tienda')
+      return
+    }
+    
+    setLoading(true)
+    try {
+      const url = editingBanner ? `/api/banners/${editingBanner}` : '/api/banners'
+      const method = editingBanner ? 'PUT' : 'POST'
+      
+      const body = {
+        ...bannerForm,
+        storeId: store.id,
+        order: bannerForm.order || 0
+      }
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      
+      if (response.ok) {
+        setBannerForm({
+          image: '',
+          title: '',
+          description: '',
+          link: '',
+          whatsappMessage: '',
+          categoryId: '',
+          isActive: true,
+          order: 0
+        })
+        setEditingBanner(null)
+        setBannerImageType('url')
+        setBannerImageFile(null)
+        setBannerImagePreview('')
+        setBannerImageFilename('')
+        await fetchData()
+        setSuccessMessage(editingBanner ? 'Banner actualizado correctamente' : 'Banner creado correctamente')
+        setTimeout(() => setSuccessMessage(null), 3000)
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || 'Error guardando banner')
+      }
+    } catch (err) {
+      setError('Error guardando banner')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const editBanner = (banner: Banner) => {
+    setBannerForm(banner)
+    setEditingBanner(banner.id)
+    if (banner.image) {
+      setBannerImagePreview(banner.image)
+      setBannerImageType(banner.image.startsWith('/uploads/') ? 'file' : 'url')
+      if (banner.image.startsWith('/uploads/')) {
+        setBannerImageFilename(banner.image.split('/').pop() || '')
+      }
+    }
+  }
+
+  const deleteBanner = async (id: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar este banner?')) return
+    
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/banners/${id}`, { method: 'DELETE' })
+      if (response.ok) {
+        await fetchData()
+        setSuccessMessage('Banner eliminado correctamente')
+        setTimeout(() => setSuccessMessage(null), 3000)
+      } else {
+        setError('Error eliminando banner')
+      }
+    } catch (err) {
+      setError('Error eliminando banner')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const cancelBannerEdit = () => {
+    setBannerForm({
+      image: '',
+      title: '',
+      description: '',
+      link: '',
+      whatsappMessage: '',
+      categoryId: '',
+      isActive: true,
+      order: 0
+    })
+    setEditingBanner(null)
+    setBannerImageType('url')
+    setBannerImageFile(null)
+    setBannerImagePreview('')
+    setBannerImageFilename('')
+  }
+
   if (loading && products.length === 0) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -646,6 +793,14 @@ export default function AdminPanel() {
             }`}
           >
             <Settings className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" /> <span className="hidden sm:inline">Configuración</span><span className="sm:hidden">Config.</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('banners')}
+            className={`py-2 px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center ${
+              activeTab === 'banners' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" /> <span className="hidden sm:inline">Banners</span><span className="sm:hidden">Banner</span>
           </button>
         </nav>
       </div>
@@ -1526,6 +1681,260 @@ export default function AdminPanel() {
                 <Save className="h-4 w-4 mr-1 sm:mr-2" /> <span className="hidden sm:inline">Guardar Configuración</span><span className="sm:hidden">Guardar</span>
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Banners Tab */}
+      {activeTab === 'banners' && (
+        <div className="space-y-4 sm:space-y-6">
+          {/* Banner Form */}
+          <div className="bg-white shadow rounded-lg p-3 sm:p-4 lg:p-6">
+            <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">
+              {editingBanner ? 'Editar Banner' : 'Agregar Nuevo Banner'}
+            </h2>
+            <form onSubmit={handleBannerSubmit} className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                {/* Image */}
+                <div className="md:col-span-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Imagen del Banner</label>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <button
+                      type="button"
+                      onClick={() => setBannerImageType('url')}
+                      className={`px-3 py-1 rounded-md text-xs sm:text-sm ${bannerImageType === 'url' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                    >
+                      URL
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBannerImageType('file')}
+                      className={`px-3 py-1 rounded-md text-xs sm:text-sm ${bannerImageType === 'file' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                    >
+                      Archivo
+                    </button>
+                  </div>
+                  {bannerImageType === 'url' ? (
+                    <input
+                      type="url"
+                      value={bannerForm.image}
+                      onChange={(e) => setBannerForm({ ...bannerForm, image: e.target.value })}
+                      className="block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="https://ejemplo.com/imagen.jpg"
+                      required
+                    />
+                  ) : (
+                    <div className="space-y-2">
+                      {bannerImageFilename && !bannerImageFile && (
+                        <div className="p-2 bg-blue-50 rounded-md">
+                          <p className="text-xs sm:text-sm text-blue-700">
+                            <span className="font-medium">Archivo actual:</span> {bannerImageFilename}
+                          </p>
+                        </div>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) {
+                            setBannerImageFile(file)
+                            setBannerImageFilename(file.name)
+                            const reader = new FileReader()
+                            reader.onloadend = () => {
+                              setBannerImagePreview(reader.result as string)
+                              setBannerForm({ ...bannerForm, image: reader.result as string })
+                            }
+                            reader.readAsDataURL(file)
+                          }
+                        }}
+                        className="block w-full text-xs sm:text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs sm:file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                    </div>
+                  )}
+                  {bannerImagePreview && (
+                    <div className="mt-2">
+                      <img src={bannerImagePreview} alt="Preview" className="h-20 object-contain rounded-md" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Title */}
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Título (opcional)</label>
+                  <input
+                    type="text"
+                    value={bannerForm.title || ''}
+                    onChange={(e) => setBannerForm({ ...bannerForm, title: e.target.value })}
+                    className="block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Título del banner"
+                  />
+                </div>
+
+                {/* Order */}
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Orden</label>
+                  <input
+                    type="number"
+                    value={bannerForm.order || 0}
+                    onChange={(e) => setBannerForm({ ...bannerForm, order: parseInt(e.target.value) || 0 })}
+                    className="block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    min="0"
+                  />
+                </div>
+
+                {/* Description */}
+                <div className="md:col-span-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Descripción (opcional)</label>
+                  <textarea
+                    value={bannerForm.description || ''}
+                    onChange={(e) => setBannerForm({ ...bannerForm, description: e.target.value })}
+                    className="block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    rows={2}
+                    placeholder="Descripción corta del banner"
+                  />
+                </div>
+
+                {/* Link */}
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Link (opcional)</label>
+                  <input
+                    type="url"
+                    value={bannerForm.link || ''}
+                    onChange={(e) => setBannerForm({ ...bannerForm, link: e.target.value })}
+                    className="block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="https://ejemplo.com"
+                  />
+                </div>
+
+                {/* WhatsApp Message */}
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Mensaje WhatsApp (opcional)</label>
+                  <input
+                    type="text"
+                    value={bannerForm.whatsappMessage || ''}
+                    onChange={(e) => setBannerForm({ ...bannerForm, whatsappMessage: e.target.value })}
+                    className="block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Hola, quiero más información"
+                  />
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Categoría (opcional)</label>
+                  <select
+                    value={bannerForm.categoryId || ''}
+                    onChange={(e) => setBannerForm({ ...bannerForm, categoryId: e.target.value || undefined })}
+                    className="block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Sin categoría</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Active Toggle */}
+                <div className="flex items-center">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={bannerForm.isActive}
+                      onChange={(e) => setBannerForm({ ...bannerForm, isActive: e.target.checked })}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <span className="text-xs sm:text-sm font-medium text-gray-700">Activo</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center text-sm"
+                >
+                  <Save className="h-4 w-4 mr-1 sm:mr-2" />
+                  {editingBanner ? 'Actualizar Banner' : 'Agregar Banner'}
+                </button>
+                {editingBanner && (
+                  <button
+                    type="button"
+                    onClick={cancelBannerEdit}
+                    className="bg-gray-300 text-gray-700 px-3 sm:px-4 py-2 rounded-md hover:bg-gray-400 flex items-center justify-center text-sm"
+                  >
+                    <X className="h-4 w-4 mr-1 sm:mr-2" /> Cancelar
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+
+          {/* Banners List */}
+          <div className="bg-white shadow rounded-lg p-3 sm:p-4 lg:p-6">
+            <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">Banners Existentes</h2>
+            <div className="overflow-x-auto -mx-3 px-3">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">Imagen</th>
+                    <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">Título</th>
+                    <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Categoría</th>
+                    <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">Ord.</th>
+                    <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">Est.</th>
+                    <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">Acc.</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {banners.map((banner) => (
+                    <tr key={banner.id}>
+                      <td className="px-2 sm:px-6 py-2 sm:py-4">
+                        <img src={banner.image} alt={banner.title || 'Banner'} className="h-12 w-20 object-cover rounded-md" />
+                      </td>
+                      <td className="px-2 sm:px-6 py-2 sm:py-4">
+                        <div className="text-sm font-medium text-gray-900">{banner.title || 'Sin título'}</div>
+                      </td>
+                      <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {banner.category?.name || '-'}
+                      </td>
+                      <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-sm text-gray-500">
+                        {banner.order}
+                      </td>
+                      <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${banner.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {banner.isActive ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </td>
+                      <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex items-center space-x-1 sm:space-x-2">
+                          <button
+                            onClick={() => editBanner(banner)}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="Editar"
+                          >
+                            <Edit className="h-4 w-4 sm:h-5 sm:w-5" />
+                          </button>
+                          <button
+                            onClick={() => deleteBanner(banner.id)}
+                            className="text-red-600 hover:text-red-900"
+                            title="Eliminar"
+                          >
+                            <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {banners.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No hay banners creados
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Search, ShoppingCart, Phone, Home, Package, Menu, X } from 'lucide-react'
+import Footer from '@/app/components/Footer'
+import BannerCarousel from '@/app/components/BannerCarousel'
 
 interface Product {
   id: string
@@ -19,6 +21,19 @@ interface Category {
   id: string
   name: string
   active: boolean
+}
+
+interface Banner {
+  id: string
+  image: string
+  title?: string
+  description?: string
+  link?: string
+  whatsappMessage?: string
+  categoryId?: string
+  category?: Category
+  isActive: boolean
+  order: number
 }
 
 interface Store {
@@ -50,6 +65,7 @@ interface Store {
 export default function ProductCatalog() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [banners, setBanners] = useState<Banner[]>([])
   const [store, setStore] = useState<Store | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState<string>('')
@@ -63,10 +79,11 @@ export default function ProductCatalog() {
 
   const fetchData = async () => {
     try {
-      const [productsRes, categoriesRes, storeRes] = await Promise.all([
+      const [productsRes, categoriesRes, storeRes, bannersRes] = await Promise.all([
         fetch('/api/products'),
         fetch('/api/categories'),
-        fetch('/api/store')
+        fetch('/api/store'),
+        fetch('/api/banners')
       ])
 
       // Check if responses are ok
@@ -77,6 +94,7 @@ export default function ProductCatalog() {
       const productsData = await productsRes.json()
       const categoriesData = await categoriesRes.json()
       const storeData = await storeRes.json()
+      const bannersData = bannersRes.ok ? await bannersRes.json() : []
 
       // Validate data before setting state
       if (Array.isArray(productsData)) {
@@ -99,11 +117,18 @@ export default function ProductCatalog() {
         console.error('Store data is invalid:', storeData)
         setStore(null)
       }
+
+      if (Array.isArray(bannersData)) {
+        setBanners(bannersData.filter((b: Banner) => b.isActive))
+      } else {
+        setBanners([])
+      }
     } catch (error) {
       console.error('Error fetching data:', error)
       setProducts([])
       setCategories([])
       setStore(null)
+      setBanners([])
     } finally {
       setLoading(false)
     }
@@ -246,6 +271,9 @@ export default function ProductCatalog() {
 
           {/* Main Content */}
           <main className="flex-1 min-w-0">
+            {/* Banner Carousel */}
+            <BannerCarousel banners={banners} store={store} />
+
             {/* Categories Horizontal Scroll - Mobile/Tablet */}
             <div className="lg:hidden mb-4 overflow-x-auto pb-2 -mx-3 px-3">
               <div className="flex space-x-2">
@@ -382,6 +410,9 @@ export default function ProductCatalog() {
           </main>
         </div>
       </div>
+
+      {/* Footer */}
+      <Footer store={store} />
 
       {/* Floating Home Button */}
       <a
