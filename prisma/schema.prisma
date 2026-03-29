@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id             String     @id @default(cuid())
+  name           String
+  logo           String
+  whatsapp       String
+  primaryColor   String     @default("#3b82f6")
+  secondaryColor String     @default("#1e40af")
+  description    String
+  email          String?
+  address        String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  categories     Category[]
+  products       Product[]
+
+  @@map("stores")
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  storeId     String
+  store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  products    Product[]
+
+  @@unique([storeId, name])
+  @@map("categories")
+}
+
+model Product {
+  id              String   @id @default(cuid())
+  name            String
+  description     String
+  price           Float
+  image           String
+  whatsappMessage String
+  active          Boolean  @default(true)
+  currency        String   @default("PYG")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  storeId         String
+  categoryId      String
+  category        Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  store           Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@map("products")
+}
+
+model Admin {
+  id        String   @id
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("admin")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @db.Timestamp(6)
+
+  @@index([email])
+}
