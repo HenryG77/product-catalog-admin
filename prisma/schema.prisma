@@ -8,19 +8,43 @@ datasource db {
 }
 
 model Store {
-  id             String     @id @default(cuid())
-  name           String
-  logo           String
-  whatsapp       String
-  primaryColor   String     @default("#3b82f6")
-  secondaryColor String     @default("#1e40af")
-  description    String
-  email          String?
-  address        String?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  categories     Category[]
-  products       Product[]
+  id              String     @id @default(cuid())
+  name            String
+  logo            String
+  whatsapp        String
+  primaryColor    String     @default("#3b82f6")
+  secondaryColor  String     @default("#1e40af")
+  description     String
+  email           String?
+  address         String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  categories      Category[]
+  products        Product[]
+
+  // Footer fields
+  footerCopyright String     @default("© 2024 Todos los derechos reservados") @map("footer_copyright")
+  
+  showFacebook    Boolean    @default(false) @map("show_facebook")
+  facebookUrl     String?    @map("facebook_url")
+  
+  showInstagram   Boolean    @default(false) @map("show_instagram")
+  instagramUrl    String?    @map("instagram_url")
+  
+  showTiktok      Boolean    @default(false) @map("show_tiktok")
+  tiktokUrl       String?    @map("tiktok_url")
+  
+  showAddress     Boolean    @default(false) @map("show_address")
+  addressText     String?    @map("address_text")
+  
+  showPhone       Boolean    @default(false) @map("show_phone")
+  phoneText       String?    @map("phone_text")
+  
+  showEmail       Boolean    @default(false) @map("show_email")
+  emailText       String?    @map("email_text")
+  
+  showHours       Boolean    @default(false) @map("show_hours")
+  hoursText       String?    @map("hours_text")
 
   @@map("stores")
 }

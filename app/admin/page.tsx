@@ -35,6 +35,22 @@ interface Store {
   description: string
   email?: string
   address?: string
+  // Footer fields
+  footerCopyright?: string
+  showFacebook?: boolean
+  facebookUrl?: string
+  showInstagram?: boolean
+  instagramUrl?: string
+  showTiktok?: boolean
+  tiktokUrl?: string
+  showAddress?: boolean
+  addressText?: string
+  showPhone?: boolean
+  phoneText?: string
+  showEmail?: boolean
+  emailText?: string
+  showHours?: boolean
+  hoursText?: string
 }
 
 export default function AdminPanel() {
@@ -75,7 +91,23 @@ export default function AdminPanel() {
     secondaryColor: '#1e40af',
     description: '',
     email: '',
-    address: ''
+    address: '',
+    // Footer fields
+    footerCopyright: '© 2024 Todos los derechos reservados',
+    showFacebook: false,
+    facebookUrl: '',
+    showInstagram: false,
+    instagramUrl: '',
+    showTiktok: false,
+    tiktokUrl: '',
+    showAddress: false,
+    addressText: '',
+    showPhone: false,
+    phoneText: '',
+    showEmail: false,
+    emailText: '',
+    showHours: false,
+    hoursText: ''
   })
   const [logoType, setLogoType] = useState<'url' | 'file'>('url')
   const [logoFile, setLogoFile] = useState<File | null>(null)
@@ -456,14 +488,27 @@ export default function AdminPanel() {
   const toggleProductActive = async (product: Product) => {
     setLoading(true)
     try {
+      // Only send valid fields for Prisma update (exclude relations like category)
+      const dataToSend = {
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        categoryId: product.categoryId,
+        image: product.image,
+        whatsappMessage: product.whatsappMessage,
+        active: !product.active,
+        currency: product.currency
+      }
+      
       await fetch(`/api/products/${product.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...product, active: !product.active })
+        body: JSON.stringify(dataToSend)
       })
       await fetchData()
     } catch (err) {
       setError('Error actualizando producto')
+      console.error(err)
     } finally {
       setLoading(false)
     }
@@ -532,38 +577,38 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="px-4 py-6 max-w-7xl mx-auto">
+    <div className="px-2 sm:px-4 lg:px-6 py-4 sm:py-6 max-w-[1920px] mx-auto">
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-          <div className="flex">
+        <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-md">
+          <div className="flex items-start">
             <div className="flex-shrink-0">
-              <X className="h-5 w-5 text-red-400" />
+              <X className="h-4 w-4 sm:h-5 sm:w-5 text-red-400 mt-0.5" />
             </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error</h3>
-              <div className="mt-2 text-sm text-red-700">{error}</div>
+            <div className="ml-2 sm:ml-3">
+              <h3 className="text-xs sm:text-sm font-medium text-red-800">Error</h3>
+              <div className="mt-1 text-xs sm:text-sm text-red-700">{error}</div>
             </div>
           </div>
         </div>
       )}
 
       {successMessage && (
-        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
-          <div className="flex">
+        <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-green-50 border border-green-200 rounded-md">
+          <div className="flex items-start">
             <div className="flex-shrink-0">
-              <Check className="h-5 w-5 text-green-400" />
+              <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-400 mt-0.5" />
             </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-green-800">Éxito</h3>
-              <div className="mt-2 text-sm text-green-700">{successMessage}</div>
+            <div className="ml-2 sm:ml-3">
+              <h3 className="text-xs sm:text-sm font-medium text-green-800">Éxito</h3>
+              <div className="mt-1 text-xs sm:text-sm text-green-700">{successMessage}</div>
             </div>
           </div>
         </div>
       )}
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-8">
+      <div className="border-b border-gray-200 mb-4 sm:mb-6">
+        <nav className="-mb-px flex flex-wrap gap-x-4 sm:gap-x-8">
           <button
             onClick={() => {
               if (hasChanges && activeTab === 'store') {
@@ -573,11 +618,11 @@ export default function AdminPanel() {
                 setActiveTab('products')
               }
             }}
-            className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
+            className={`py-2 px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center ${
               activeTab === 'products' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            <Package className="h-5 w-5 mr-2" /> Productos
+            <Package className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" /> <span className="hidden sm:inline">Productos</span><span className="sm:hidden">Prod.</span>
           </button>
           <button
             onClick={() => {
@@ -588,49 +633,49 @@ export default function AdminPanel() {
                 setActiveTab('categories')
               }
             }}
-            className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
+            className={`py-2 px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center ${
               activeTab === 'categories' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            <Store className="h-5 w-5 mr-2" /> Categorías
+            <Store className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" /> <span className="hidden sm:inline">Categorías</span><span className="sm:hidden">Cat.</span>
           </button>
           <button
             onClick={() => setActiveTab('store')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
+            className={`py-2 px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center ${
               activeTab === 'store' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            <Settings className="h-5 w-5 mr-2" /> Configuración
+            <Settings className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" /> <span className="hidden sm:inline">Configuración</span><span className="sm:hidden">Config.</span>
           </button>
         </nav>
       </div>
 
       {/* Products Tab */}
       {activeTab === 'products' && (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Product Form */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">
+          <div className="bg-white shadow rounded-lg p-3 sm:p-4 lg:p-6">
+            <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">
               {editingProduct ? 'Editar Producto' : 'Agregar Nuevo Producto'}
             </h2>
-            <form onSubmit={handleProductSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleProductSubmit} className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Nombre</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Nombre</label>
                   <input
                     type="text"
                     value={productForm.name || ''}
                     onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="mt-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Nombre del producto"
                     required
                     autoFocus
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Precio</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Precio</label>
                   <div className="mt-1 flex rounded-md shadow-sm">
-                    <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                    <span className="inline-flex items-center px-2 sm:px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-xs sm:text-sm">
                       {getCurrencySymbol(productForm.currency)}
                     </span>
                     <input
@@ -640,7 +685,7 @@ export default function AdminPanel() {
                         const rawValue = e.target.value.replace(/[^0-9]/g, '')
                         setProductForm({ ...productForm, price: parseFloat(rawValue) || 0 })
                       }}
-                      className="flex-1 block w-full border-gray-300 rounded-r-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      className="flex-1 block w-full text-sm border-gray-300 rounded-r-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                       placeholder="0"
                       required
                     />
@@ -648,22 +693,22 @@ export default function AdminPanel() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Descripción</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700">Descripción</label>
                 <textarea
                   value={productForm.description || ''}
                   onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
                   rows={3}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Descripción del producto"
                 />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Categoría</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Categoría</label>
                   <select
                     value={productForm.categoryId || ''}
                     onChange={(e) => setProductForm({ ...productForm, categoryId: e.target.value })}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="mt-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     required
                   >
                     <option value="">Selecciona una categoría</option>
@@ -673,11 +718,11 @@ export default function AdminPanel() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Moneda</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Moneda</label>
                   <select
                     value={productForm.currency || 'PYG'}
                     onChange={(e) => setProductForm({ ...productForm, currency: e.target.value, price: productForm.price || 0 })}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="mt-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="PYG">Guaraníes (Gs.)</option>
                     <option value="USD">Dólares ($)</option>
@@ -687,20 +732,20 @@ export default function AdminPanel() {
                   </select>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <label className="block text-sm font-medium text-gray-700">Estado</label>
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700">Estado</label>
                 <button
                   type="button"
                   onClick={() => setProductForm({ ...productForm, active: !productForm.active })}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 items-center rounded-full transition-colors ${
                     productForm.active ? 'bg-blue-600' : 'bg-gray-200'
                   }`}
                 >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    productForm.active ? 'translate-x-6' : 'translate-x-1'
+                  <span className={`inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform ${
+                    productForm.active ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
                   }`} />
                 </button>
-                <span className={`text-sm font-medium ${productForm.active ? 'text-blue-600' : 'text-gray-500'}`}>
+                <span className={`text-xs sm:text-sm font-medium ${productForm.active ? 'text-blue-600' : 'text-gray-500'}`}>
                   {productForm.active ? 'Activo' : 'Inactivo'}
                 </span>
               </div>
@@ -784,12 +829,12 @@ export default function AdminPanel() {
 
           {/* Products List */}
           <div className="bg-white shadow rounded-lg p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-              <h2 className="text-lg font-medium text-gray-900 mb-3 sm:mb-0">Productos Existentes</h2>
-              <div className="flex space-x-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
+              <h2 className="text-base sm:text-lg font-medium text-gray-900">Productos Existentes</h2>
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setProductFilter('all')}
-                  className={`px-3 py-1 rounded-md text-sm font-medium ${
+                  className={`px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium ${
                     productFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
                 >
@@ -797,7 +842,7 @@ export default function AdminPanel() {
                 </button>
                 <button
                   onClick={() => setProductFilter('active')}
-                  className={`px-3 py-1 rounded-md text-sm font-medium ${
+                  className={`px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium ${
                     productFilter === 'active' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
                 >
@@ -805,7 +850,7 @@ export default function AdminPanel() {
                 </button>
                 <button
                   onClick={() => setProductFilter('inactive')}
-                  className={`px-3 py-1 rounded-md text-sm font-medium ${
+                  className={`px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium ${
                     productFilter === 'inactive' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
                 >
@@ -813,16 +858,16 @@ export default function AdminPanel() {
                 </button>
               </div>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto -mx-3 px-3">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Imagen</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Categoría</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Precio</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                    <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">Img</th>
+                    <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
+                    <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cat.</th>
+                    <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">Precio</th>
+                    <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">Est.</th>
+                    <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">Acc.</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -833,43 +878,44 @@ export default function AdminPanel() {
                       return true
                     })
                     .map((product) => (
-                    <tr key={product.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                    <tr key={product.id} className="hover:bg-gray-50">
+                      <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
                         {product.image ? (
-                          <img src={product.image} alt={product.name} className="h-10 w-10 rounded-full object-cover" />
+                          <img src={product.image} alt={product.name} className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover" />
                         ) : (
-                          <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                            <ImageIcon className="h-5 w-5 text-gray-400" />
+                          <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                            <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                        <div className="text-sm text-gray-500">{product.description?.substring(0, 50)}...</div>
+                      <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[100px] sm:max-w-[200px]">{product.name}</div>
+                        <div className="text-xs text-gray-500 hidden sm:block">{product.description?.substring(0, 30)}...</div>
+                        <div className="text-xs text-gray-500 sm:hidden">{typeof product.category === 'string' ? product.category : product.category?.name}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {typeof product.category === 'string' ? product.category : product.category?.name}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
                         {formatPrice(product.price, product.currency)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
                         <button
                           onClick={() => toggleProductActive(product)}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 items-center rounded-full transition-colors ${
                             product.active ? 'bg-blue-600' : 'bg-gray-200'
                           }`}
                         >
-                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            product.active ? 'translate-x-6' : 'translate-x-1'
+                          <span className={`inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform ${
+                            product.active ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
                           }`} />
                         </button>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button onClick={() => editProduct(product)} className="text-blue-600 hover:text-blue-900 mr-3">
+                      <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-right text-xs sm:text-sm font-medium">
+                        <button onClick={() => editProduct(product)} className="text-blue-600 hover:text-blue-900 mr-2 sm:mr-3 p-1">
                           <Edit className="h-4 w-4" />
                         </button>
-                        <button onClick={() => deleteProduct(product.id)} className="text-red-600 hover:text-red-900">
+                        <button onClick={() => deleteProduct(product.id)} className="text-red-600 hover:text-red-900 p-1">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </td>
@@ -884,71 +930,71 @@ export default function AdminPanel() {
 
       {/* Categories Tab */}
       {activeTab === 'categories' && (
-        <div className="space-y-6">
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="bg-white shadow rounded-lg p-3 sm:p-4 lg:p-6">
+            <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">
               {editingCategory ? 'Editar Categoría' : 'Agregar Nueva Categoría'}
             </h2>
-            <form onSubmit={handleCategorySubmit} className="space-y-4">
+            <form onSubmit={handleCategorySubmit} className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Nombre</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700">Nombre</label>
                 <input
                   type="text"
                   value={categoryForm.name || ''}
                   onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Nombre de la categoría"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Descripción</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700">Descripción</label>
                 <textarea
                   value={categoryForm.description || ''}
                   onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
                   rows={3}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Descripción de la categoría"
                 />
               </div>
-              <div className="flex items-center space-x-3">
-                <label className="block text-sm font-medium text-gray-700">Estado</label>
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700">Estado</label>
                 <button
                   type="button"
                   onClick={() => setCategoryForm({ ...categoryForm, active: !categoryForm.active })}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 items-center rounded-full transition-colors ${
                     categoryForm.active ? 'bg-blue-600' : 'bg-gray-200'
                   }`}
                 >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    categoryForm.active ? 'translate-x-6' : 'translate-x-1'
+                  <span className={`inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform ${
+                    categoryForm.active ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
                   }`} />
                 </button>
-                <span className={`text-sm font-medium ${categoryForm.active ? 'text-blue-600' : 'text-gray-500'}`}>
+                <span className={`text-xs sm:text-sm font-medium ${categoryForm.active ? 'text-blue-600' : 'text-gray-500'}`}>
                   {categoryForm.active ? 'Activa' : 'Inactiva'}
                 </span>
               </div>
-              <div className="flex space-x-3">
-                <button type="submit" disabled={loading} className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center">
-                  <Save className="h-4 w-4 mr-2" />
+              <div className="flex flex-wrap gap-2 sm:gap-3">
+                <button type="submit" disabled={loading} className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center text-sm">
+                  <Save className="h-4 w-4 mr-1 sm:mr-2" />
                   {editingCategory ? 'Actualizar' : 'Guardar'}
                 </button>
                 {editingCategory && (
-                  <button type="button" onClick={cancelEdit} className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 flex items-center">
-                    <X className="h-4 w-4 mr-2" /> Cancelar
+                  <button type="button" onClick={cancelEdit} className="bg-gray-300 text-gray-700 px-3 sm:px-4 py-2 rounded-md hover:bg-gray-400 flex items-center text-sm">
+                    <X className="h-4 w-4 mr-1 sm:mr-2" /> Cancelar
                   </button>
                 )}
               </div>
             </form>
           </div>
 
-          <div className="bg-white shadow rounded-lg p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-              <h2 className="text-lg font-medium text-gray-900 mb-3 sm:mb-0">Categorías Existentes</h2>
-              <div className="flex space-x-2">
+          <div className="bg-white shadow rounded-lg p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
+              <h2 className="text-base sm:text-lg font-medium text-gray-900">Categorías Existentes</h2>
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setCategoryFilter('all')}
-                  className={`px-3 py-1 rounded-md text-sm font-medium ${
+                  className={`px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium ${
                     categoryFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
                 >
@@ -956,7 +1002,7 @@ export default function AdminPanel() {
                 </button>
                 <button
                   onClick={() => setCategoryFilter('active')}
-                  className={`px-3 py-1 rounded-md text-sm font-medium ${
+                  className={`px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium ${
                     categoryFilter === 'active' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
                 >
@@ -964,7 +1010,7 @@ export default function AdminPanel() {
                 </button>
                 <button
                   onClick={() => setCategoryFilter('inactive')}
-                  className={`px-3 py-1 rounded-md text-sm font-medium ${
+                  className={`px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium ${
                     categoryFilter === 'inactive' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
                 >
@@ -972,14 +1018,14 @@ export default function AdminPanel() {
                 </button>
               </div>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto -mx-3 px-3">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Categoría</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descripción</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                    <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">Categoría</th>
+                    <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descripción</th>
+                    <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">Est.</th>
+                    <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">Acc.</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -1026,12 +1072,12 @@ export default function AdminPanel() {
 
       {/* Store Tab */}
       {activeTab === 'store' && (
-        <div className="space-y-6">
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Configuración de la Tienda</h2>
-            <form onSubmit={handleStoreSubmit} className="space-y-4">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="bg-white shadow rounded-lg p-3 sm:p-4 lg:p-6">
+            <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">Configuración de la Tienda</h2>
+            <form onSubmit={handleStoreSubmit} className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Nombre de la Tienda</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700">Nombre de la Tienda</label>
                 <input
                   type="text"
                   value={storeForm.name || ''}
@@ -1039,21 +1085,21 @@ export default function AdminPanel() {
                     setStoreForm({ ...storeForm, name: e.target.value })
                     setHasChanges(true)
                   }}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Mi Tienda"
                   required
                 />
               </div>
               {/* Logo Section - URL or File Upload */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Logo</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Logo</label>
                 
                 {/* Toggle between URL and File */}
-                <div className="flex space-x-4 mb-3">
+                <div className="flex flex-wrap gap-2 sm:gap-4 mb-3">
                   <button
                     type="button"
                     onClick={() => setLogoType('url')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium ${
+                    className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium ${
                       logoType === 'url'
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -1064,7 +1110,7 @@ export default function AdminPanel() {
                   <button
                     type="button"
                     onClick={() => setLogoType('file')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium ${
+                    className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium ${
                       logoType === 'file'
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -1085,7 +1131,7 @@ export default function AdminPanel() {
                       setLogoPreview(value)
                       setHasChanges(true)
                     }}
-                    className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     placeholder="https://ejemplo.com/logo.png"
                   />
                 )}
@@ -1096,7 +1142,7 @@ export default function AdminPanel() {
                     {/* Show existing filename if available */}
                     {logoFilename && !logoFile && (
                       <div className="p-2 bg-blue-50 rounded-md">
-                        <p className="text-sm text-blue-700">
+                        <p className="text-xs sm:text-sm text-blue-700">
                           <span className="font-medium">Archivo actual:</span> {logoFilename}
                         </p>
                       </div>
@@ -1104,7 +1150,7 @@ export default function AdminPanel() {
                     {/* Show new file name if selected */}
                     {logoFile && (
                       <div className="p-2 bg-green-50 rounded-md">
-                        <p className="text-sm text-green-700">
+                        <p className="text-xs sm:text-sm text-green-700">
                           <span className="font-medium">Nuevo archivo:</span> {logoFile.name}
                         </p>
                       </div>
@@ -1125,7 +1171,7 @@ export default function AdminPanel() {
                           reader.readAsDataURL(file)
                         }
                       }}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      className="block w-full text-xs sm:text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs sm:file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                     />
                     <p className="text-xs text-gray-500">Formatos: JPG, PNG, WEBP. Máx: 5MB</p>
                   </div>
@@ -1134,11 +1180,11 @@ export default function AdminPanel() {
                 {/* Logo Preview */}
                 {logoPreview && (
                   <div className="mt-3">
-                    <p className="text-sm text-gray-600 mb-2">Vista previa:</p>
+                    <p className="text-xs sm:text-sm text-gray-600 mb-2">Vista previa:</p>
                     <img
                       src={logoPreview}
                       alt="Logo preview"
-                      className="h-20 w-20 object-contain border rounded-md"
+                      className="h-16 w-16 sm:h-20 sm:w-20 object-contain border rounded-md"
                     />
                   </div>
                 )}
@@ -1146,17 +1192,17 @@ export default function AdminPanel() {
                 {/* Current Logo if exists and no preview */}
                 {!logoPreview && storeForm.logo && (
                   <div className="mt-3">
-                    <p className="text-sm text-gray-600 mb-2">Logo actual:</p>
+                    <p className="text-xs sm:text-sm text-gray-600 mb-2">Logo actual:</p>
                     <img
                       src={storeForm.logo}
                       alt="Current logo"
-                      className="h-20 w-20 object-contain border rounded-md"
+                      className="h-16 w-16 sm:h-20 sm:w-20 object-contain border rounded-md"
                     />
                   </div>
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">WhatsApp</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700">WhatsApp</label>
                 <input
                   type="text"
                   value={storeForm.whatsapp || ''}
@@ -1164,13 +1210,13 @@ export default function AdminPanel() {
                     setStoreForm({ ...storeForm, whatsapp: e.target.value })
                     setHasChanges(true)
                   }}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   placeholder="+549123456789"
                 />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Color Primario</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Color Primario</label>
                   <input
                     type="color"
                     value={storeForm.primaryColor || '#3b82f6'}
@@ -1178,11 +1224,11 @@ export default function AdminPanel() {
                       setStoreForm({ ...storeForm, primaryColor: e.target.value })
                       setHasChanges(true)
                     }}
-                    className="mt-1 block w-full h-10 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="mt-1 block w-full h-10 text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Color Secundario</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Color Secundario</label>
                   <input
                     type="color"
                     value={storeForm.secondaryColor || '#1e40af'}
@@ -1190,12 +1236,12 @@ export default function AdminPanel() {
                       setStoreForm({ ...storeForm, secondaryColor: e.target.value })
                       setHasChanges(true)
                     }}
-                    className="mt-1 block w-full h-10 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="mt-1 block w-full h-10 text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Descripción</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700">Descripción</label>
                 <textarea
                   value={storeForm.description || ''}
                   onChange={(e) => {
@@ -1203,16 +1249,281 @@ export default function AdminPanel() {
                     setHasChanges(true)
                   }}
                   rows={3}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Descripción de la tienda"
                 />
               </div>
+
+              {/* Footer Configuration Section */}
+              <div className="border-t border-gray-200 pt-6 mt-6">
+                <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">Configuración del Footer</h3>
+                
+                {/* Copyright Text - Required */}
+                <div className="mb-4">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                    Texto de Derechos Reservados <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={storeForm.footerCopyright || ''}
+                    onChange={(e) => {
+                      setStoreForm({ ...storeForm, footerCopyright: e.target.value })
+                      setHasChanges(true)
+                    }}
+                    className="mt-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="© 2024 Todos los derechos reservados"
+                    required
+                  />
+                </div>
+
+                {/* Social Media Section */}
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Redes Sociales</h4>
+                  
+                  {/* Facebook */}
+                  <div className="flex items-center justify-between mb-3 p-3 bg-gray-50 rounded-md">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <span className="text-sm font-medium text-gray-700">Facebook</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStoreForm({ ...storeForm, showFacebook: !storeForm.showFacebook })
+                          setHasChanges(true)
+                        }}
+                        className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 items-center rounded-full transition-colors ${
+                          storeForm.showFacebook ? 'bg-blue-600' : 'bg-gray-200'
+                        }`}
+                      >
+                        <span className={`inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform ${
+                          storeForm.showFacebook ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
+                        }`} />
+                      </button>
+                    </div>
+                    {storeForm.showFacebook && (
+                      <input
+                        type="url"
+                        value={storeForm.facebookUrl || ''}
+                        onChange={(e) => {
+                          setStoreForm({ ...storeForm, facebookUrl: e.target.value })
+                          setHasChanges(true)
+                        }}
+                        className="ml-3 flex-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="https://facebook.com/tu-pagina"
+                      />
+                    )}
+                  </div>
+
+                  {/* Instagram */}
+                  <div className="flex items-center justify-between mb-3 p-3 bg-gray-50 rounded-md">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <span className="text-sm font-medium text-gray-700">Instagram</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStoreForm({ ...storeForm, showInstagram: !storeForm.showInstagram })
+                          setHasChanges(true)
+                        }}
+                        className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 items-center rounded-full transition-colors ${
+                          storeForm.showInstagram ? 'bg-blue-600' : 'bg-gray-200'
+                        }`}
+                      >
+                        <span className={`inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform ${
+                          storeForm.showInstagram ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
+                        }`} />
+                      </button>
+                    </div>
+                    {storeForm.showInstagram && (
+                      <input
+                        type="url"
+                        value={storeForm.instagramUrl || ''}
+                        onChange={(e) => {
+                          setStoreForm({ ...storeForm, instagramUrl: e.target.value })
+                          setHasChanges(true)
+                        }}
+                        className="ml-3 flex-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="https://instagram.com/tu-cuenta"
+                      />
+                    )}
+                  </div>
+
+                  {/* TikTok */}
+                  <div className="flex items-center justify-between mb-3 p-3 bg-gray-50 rounded-md">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <span className="text-sm font-medium text-gray-700">TikTok</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStoreForm({ ...storeForm, showTiktok: !storeForm.showTiktok })
+                          setHasChanges(true)
+                        }}
+                        className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 items-center rounded-full transition-colors ${
+                          storeForm.showTiktok ? 'bg-blue-600' : 'bg-gray-200'
+                        }`}
+                      >
+                        <span className={`inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform ${
+                          storeForm.showTiktok ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
+                        }`} />
+                      </button>
+                    </div>
+                    {storeForm.showTiktok && (
+                      <input
+                        type="url"
+                        value={storeForm.tiktokUrl || ''}
+                        onChange={(e) => {
+                          setStoreForm({ ...storeForm, tiktokUrl: e.target.value })
+                          setHasChanges(true)
+                        }}
+                        className="ml-3 flex-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="https://tiktok.com/@tu-cuenta"
+                      />
+                    )}
+                  </div>
+                </div>
+
+                {/* Contact Info Section */}
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Información de Contacto</h4>
+                  
+                  {/* Address */}
+                  <div className="flex items-center justify-between mb-3 p-3 bg-gray-50 rounded-md">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <span className="text-sm font-medium text-gray-700">Dirección</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStoreForm({ ...storeForm, showAddress: !storeForm.showAddress })
+                          setHasChanges(true)
+                        }}
+                        className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 items-center rounded-full transition-colors ${
+                          storeForm.showAddress ? 'bg-blue-600' : 'bg-gray-200'
+                        }`}
+                      >
+                        <span className={`inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform ${
+                          storeForm.showAddress ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
+                        }`} />
+                      </button>
+                    </div>
+                    {storeForm.showAddress && (
+                      <input
+                        type="text"
+                        value={storeForm.addressText || ''}
+                        onChange={(e) => {
+                          setStoreForm({ ...storeForm, addressText: e.target.value })
+                          setHasChanges(true)
+                        }}
+                        className="ml-3 flex-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Av. Principal 123, Ciudad"
+                      />
+                    )}
+                  </div>
+
+                  {/* Phone */}
+                  <div className="flex items-center justify-between mb-3 p-3 bg-gray-50 rounded-md">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <span className="text-sm font-medium text-gray-700">Teléfono</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStoreForm({ ...storeForm, showPhone: !storeForm.showPhone })
+                          setHasChanges(true)
+                        }}
+                        className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 items-center rounded-full transition-colors ${
+                          storeForm.showPhone ? 'bg-blue-600' : 'bg-gray-200'
+                        }`}
+                      >
+                        <span className={`inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform ${
+                          storeForm.showPhone ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
+                        }`} />
+                      </button>
+                    </div>
+                    {storeForm.showPhone && (
+                      <input
+                        type="text"
+                        value={storeForm.phoneText || ''}
+                        onChange={(e) => {
+                          setStoreForm({ ...storeForm, phoneText: e.target.value })
+                          setHasChanges(true)
+                        }}
+                        className="ml-3 flex-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="+54 9 1234 5678"
+                      />
+                    )}
+                  </div>
+
+                  {/* Email */}
+                  <div className="flex items-center justify-between mb-3 p-3 bg-gray-50 rounded-md">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <span className="text-sm font-medium text-gray-700">Email</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStoreForm({ ...storeForm, showEmail: !storeForm.showEmail })
+                          setHasChanges(true)
+                        }}
+                        className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 items-center rounded-full transition-colors ${
+                          storeForm.showEmail ? 'bg-blue-600' : 'bg-gray-200'
+                        }`}
+                      >
+                        <span className={`inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform ${
+                          storeForm.showEmail ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
+                        }`} />
+                      </button>
+                    </div>
+                    {storeForm.showEmail && (
+                      <input
+                        type="email"
+                        value={storeForm.emailText || ''}
+                        onChange={(e) => {
+                          setStoreForm({ ...storeForm, emailText: e.target.value })
+                          setHasChanges(true)
+                        }}
+                        className="ml-3 flex-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="contacto@tutienda.com"
+                      />
+                    )}
+                  </div>
+
+                  {/* Hours */}
+                  <div className="flex items-center justify-between mb-3 p-3 bg-gray-50 rounded-md">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <span className="text-sm font-medium text-gray-700">Horario</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStoreForm({ ...storeForm, showHours: !storeForm.showHours })
+                          setHasChanges(true)
+                        }}
+                        className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 items-center rounded-full transition-colors ${
+                          storeForm.showHours ? 'bg-blue-600' : 'bg-gray-200'
+                        }`}
+                      >
+                        <span className={`inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform ${
+                          storeForm.showHours ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
+                        }`} />
+                      </button>
+                    </div>
+                    {storeForm.showHours && (
+                      <input
+                        type="text"
+                        value={storeForm.hoursText || ''}
+                        onChange={(e) => {
+                          setStoreForm({ ...storeForm, hoursText: e.target.value })
+                          setHasChanges(true)
+                        }}
+                        className="ml-3 flex-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Lun-Vie: 9:00-18:00"
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center"
+                className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center text-sm"
               >
-                <Save className="h-4 w-4 mr-2" /> Guardar Configuración
+                <Save className="h-4 w-4 mr-1 sm:mr-2" /> <span className="hidden sm:inline">Guardar Configuración</span><span className="sm:hidden">Guardar</span>
               </button>
             </form>
           </div>
@@ -1220,13 +1531,13 @@ export default function AdminPanel() {
       )}
       {/* Unsaved Changes Modal */}
       {showUnsavedModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Cambios sin guardar</h3>
-            <p className="text-sm text-gray-600 mb-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full mx-auto">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">Cambios sin guardar</h3>
+            <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">
               Has realizado cambios en la configuración que no han sido guardados. ¿Qué deseas hacer?
             </p>
-            <div className="flex space-x-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button
                 onClick={async () => {
                   // Save changes
@@ -1237,9 +1548,9 @@ export default function AdminPanel() {
                     setPendingTab(null)
                   }
                 }}
-                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center justify-center"
+                className="flex-1 bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-blue-700 flex items-center justify-center text-sm"
               >
-                <Save className="h-4 w-4 mr-2" /> Guardar
+                <Save className="h-4 w-4 mr-1 sm:mr-2" /> Guardar
               </button>
               <button
                 onClick={() => {
@@ -1267,7 +1578,7 @@ export default function AdminPanel() {
                   }
                   setLogoFile(null)
                 }}
-                className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+                className="flex-1 bg-gray-300 text-gray-700 px-3 sm:px-4 py-2 rounded-md hover:bg-gray-400 text-sm"
               >
                 Cancelar
               </button>
@@ -1277,7 +1588,7 @@ export default function AdminPanel() {
                   setShowUnsavedModal(false)
                   setPendingTab(null)
                 }}
-                className="flex-1 border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50"
+                className="flex-1 border border-gray-300 text-gray-700 px-3 sm:px-4 py-2 rounded-md hover:bg-gray-50 text-sm"
               >
                 Seguir editando
               </button>
@@ -1288,22 +1599,22 @@ export default function AdminPanel() {
 
       {/* Delete Category Confirmation Modal */}
       {showDeleteConfirmModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">¿Eliminar categoría?</h3>
-            <p className="text-sm text-gray-600 mb-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full mx-auto">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">¿Eliminar categoría?</h3>
+            <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">
               ¿Estás seguro de que quieres eliminar esta categoría? Esta acción no se puede deshacer.
             </p>
-            <div className="flex space-x-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button
                 onClick={confirmDeleteCategory}
-                className="flex-1 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center justify-center"
+                className="flex-1 bg-red-600 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-red-700 flex items-center justify-center text-sm"
               >
-                <Trash2 className="h-4 w-4 mr-2" /> Eliminar
+                <Trash2 className="h-4 w-4 mr-1 sm:mr-2" /> Eliminar
               </button>
               <button
                 onClick={cancelDeleteCategory}
-                className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+                className="flex-1 bg-gray-300 text-gray-700 px-3 sm:px-4 py-2 rounded-md hover:bg-gray-400 text-sm"
               >
                 Cancelar
               </button>
@@ -1314,23 +1625,23 @@ export default function AdminPanel() {
 
       {/* Delete Category Error Modal */}
       {showDeleteErrorModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <div className="flex items-center mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full mx-auto">
+            <div className="flex items-center mb-3 sm:mb-4">
               <div className="flex-shrink-0">
-                <X className="h-6 w-6 text-red-600" />
+                <X className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
               </div>
               <div className="ml-3">
-                <h3 className="text-lg font-medium text-gray-900">No se puede eliminar</h3>
+                <h3 className="text-base sm:text-lg font-medium text-gray-900">No se puede eliminar</h3>
               </div>
             </div>
-            <p className="text-sm text-gray-600 mb-6">
+            <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">
               {deleteErrorMessage}
             </p>
             <div className="flex justify-center">
               <button
                 onClick={closeDeleteErrorModal}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-blue-700 text-sm"
               >
                 Entendido
               </button>
