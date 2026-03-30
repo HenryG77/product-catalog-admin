@@ -36,14 +36,30 @@ Sistema web completo para catálogo de productos con panel de administración y 
 npm install
 ```
 
-3. Configurar variables de entorno en `.env.local`:
+3. Configurar variables de entorno en `.env.local`: (Usar nomas ya postgres)
 ```env
 MONGODB_URI=mongodb://localhost:27017/product-catalog
 NEXTAUTH_SECRET=your-secret-key-here
 NEXTAUTH_URL=http://localhost:3000
+
+# =========================
+# DATABASE (PostgreSQL)
+# =========================
+DATABASE_URL="postgresql://postgres:TU_PASSWORD@localhost:5434/product-catalog"
+
+# =========================
+# APP (Next.js / Frontend)
+# =========================
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key-here
+
+# =========================
+# SERVER (si usas backend)
+# =========================
+PORT=3000
 ```
 
-4. Iniciar MongoDB localmente o configurar MongoDB Atlas
+4. Iniciar MongoDB localmente o configurar MongoDB Atlas (Se utiliza ahora PostgreSQL)
 
 5. Ejecutar en desarrollo:
 ```bash
