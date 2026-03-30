@@ -5,6 +5,12 @@ import { Search, ShoppingCart, Phone, Home, Package, Menu, X } from 'lucide-reac
 import Footer from '@/app/components/Footer'
 import BannerCarousel from '@/app/components/BannerCarousel'
 
+interface ProductImage {
+  id: string
+  url: string
+  order: number
+}
+
 interface Product {
   id: string
   name: string
@@ -15,6 +21,7 @@ interface Product {
   whatsappMessage: string
   active: boolean
   currency?: string
+  images?: ProductImage[]
 }
 
 interface Category {
@@ -354,7 +361,9 @@ export default function ProductCatalog() {
               </div>
               
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-5 xl:gap-6">
-                {filteredProducts.map((product) => (
+                {filteredProducts.map((product) => {
+                  const allImages = [product.image, ...(product.images?.map(img => img.url) || [])]
+                  return (
                   <div key={product.id} className="bg-white rounded-lg shadow-sm sm:shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                     <div className="aspect-square relative bg-gray-100">
                       <img
@@ -362,11 +371,15 @@ export default function ProductCatalog() {
                         alt={product.name}
                         className="w-full h-full object-cover"
                       />
+                      {allImages.length > 1 && (
+                        <div className="absolute top-2 left-2 bg-black/60 text-white px-2 py-1 rounded-full text-xs font-medium">
+                          1/{allImages.length}
+                        </div>
+                      )}
                       <div className="absolute top-2 right-2 bg-green-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-bold">
                         {(() => {
                           const price = product.price || 0
                           const currency = product.currency || 'PYG'
-                          
                           if (currency === 'PYG') {
                             return `Gs. ${price.toLocaleString('es-PY')}`
                           } else if (currency === 'USD') {
@@ -378,6 +391,20 @@ export default function ProductCatalog() {
                           }
                         })()}
                       </div>
+                      {product.images && product.images.length > 0 && (
+                        <div className="absolute bottom-2 left-2 right-2 flex gap-1 overflow-x-auto pb-1">
+                          {product.images.slice(0, 4).map((img, idx) => (
+                            <div key={img.id} className="flex-shrink-0 w-10 h-10 rounded-md overflow-hidden border-2 border-white shadow-sm">
+                              <img src={img.url} alt={`${product.name} ${idx + 2}`} className="w-full h-full object-cover" />
+                            </div>
+                          ))}
+                          {product.images.length > 4 && (
+                            <div className="flex-shrink-0 w-10 h-10 rounded-md bg-black/60 text-white flex items-center justify-center text-xs font-medium">
+                              +{product.images.length - 4}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="p-2 sm:p-3 lg:p-4">
                       <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base line-clamp-1">{product.name}</h3>
@@ -392,7 +419,7 @@ export default function ProductCatalog() {
                       </button>
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
 
               {filteredProducts.length === 0 && (
