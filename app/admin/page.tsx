@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Package, Settings, Plus, Edit, Trash2, Save, X, Image as ImageIcon, Store, Check } from 'lucide-react'
+import { Package, Settings, Plus, Edit, Trash2, Save, X, Image as ImageIcon, Store, Check, Tag, Search } from 'lucide-react'
 import ProductImageGrid, { MultiImageUpload } from '@/app/components/ProductImageGrid'
 
 interface ProductImage {
@@ -178,6 +178,13 @@ export default function AdminPanel() {
 
   // Product filter state
   const [productFilter, setProductFilter] = useState<'all' | 'active' | 'inactive'>('all')
+
+  // Advanced product filters
+  const [productSearchName, setProductSearchName] = useState('')
+  const [productCategoryFilter, setProductCategoryFilter] = useState<string>('')
+  const [categorySearchText, setCategorySearchText] = useState('')
+  const [productStatusFilter, setProductStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
 
   // Category deletion modal states
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null)
@@ -934,22 +941,39 @@ export default function AdminPanel() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Precio</label>
-                  <div className="mt-1 flex rounded-md shadow-sm">
-                    <span className="inline-flex items-center px-2 sm:px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-xs sm:text-sm">
-                      {getCurrencySymbol(productForm.currency)}
-                    </span>
-                    <input
-                      type="text"
-                      value={productForm.price ? formatPriceInput(productForm.price.toString(), productForm.currency) : ''}
-                      onChange={(e) => {
-                        const rawValue = e.target.value.replace(/[^0-9]/g, '')
-                        setProductForm({ ...productForm, price: parseFloat(rawValue) || 0 })
-                      }}
-                      className="flex-1 block w-full text-sm border-gray-300 rounded-r-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="0"
-                      required
-                    />
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Precio</label>
+                  <div className="flex gap-2">
+                    {/* Price Input with Currency Prefix */}
+                    <div className="relative flex-1">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span className="text-gray-500 text-sm font-medium bg-gray-100 px-2 py-0.5 rounded">
+                          {getCurrencySymbol(productForm.currency)}
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        value={productForm.price ? formatPriceInput(productForm.price.toString(), productForm.currency) : ''}
+                        onChange={(e) => {
+                          const rawValue = e.target.value.replace(/[^0-9]/g, '')
+                          setProductForm({ ...productForm, price: parseFloat(rawValue) || 0 })
+                        }}
+                        className="block w-full pl-14 pr-3 py-2 text-sm border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        placeholder="0"
+                        required
+                      />
+                    </div>
+                    {/* Currency Selector */}
+                    <select
+                      value={productForm.currency || 'PYG'}
+                      onChange={(e) => setProductForm({ ...productForm, currency: e.target.value, price: productForm.price || 0 })}
+                      className="w-28 sm:w-32 px-3 py-2 text-sm border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-colors"
+                    >
+                      <option value="PYG">Gs.</option>
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                      <option value="ARS">ARS</option>
+                      <option value="BRL">BRL</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -979,18 +1003,14 @@ export default function AdminPanel() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Moneda</label>
-                  <select
-                    value={productForm.currency || 'PYG'}
-                    onChange={(e) => setProductForm({ ...productForm, currency: e.target.value, price: productForm.price || 0 })}
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Mensaje WhatsApp (opcional)</label>
+                  <input
+                    type="text"
+                    value={productForm.whatsappMessage || ''}
+                    onChange={(e) => setProductForm({ ...productForm, whatsappMessage: e.target.value })}
                     className="mt-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="PYG">Guaraníes (Gs.)</option>
-                    <option value="USD">Dólares ($)</option>
-                    <option value="EUR">Euros (€)</option>
-                    <option value="ARS">Pesos Argentinos ($)</option>
-                    <option value="BRL">Reales (R$)</option>
-                  </select>
+                    placeholder="Mensaje personalizado para pedidos"
+                  />
                 </div>
               </div>
               <div className="flex items-center space-x-2 sm:space-x-3">
@@ -1129,34 +1149,129 @@ export default function AdminPanel() {
 
           {/* Products List */}
           <div className="bg-white shadow rounded-lg p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
-              <h2 className="text-base sm:text-lg font-medium text-gray-900">Productos Existentes</h2>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setProductFilter('all')}
-                  className={`px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium ${
-                    productFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  Todos
-                </button>
-                <button
-                  onClick={() => setProductFilter('active')}
-                  className={`px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium ${
-                    productFilter === 'active' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  Activo
-                </button>
-                <button
-                  onClick={() => setProductFilter('inactive')}
-                  className={`px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium ${
-                    productFilter === 'inactive' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  Inactivo
-                </button>
+            {/* Filter Bar */}
+            <div className="mb-6 space-y-3 sm:space-y-4">
+              <div className="flex flex-col lg:flex-row gap-3">
+                {/* Search by Name */}
+                <div className="flex-1">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={productSearchName}
+                      onChange={(e) => setProductSearchName(e.target.value)}
+                      placeholder="Buscar producto..."
+                      className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    />
+                    <Package className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  </div>
+                </div>
+
+                {/* Category Filter with Autocomplete */}
+                <div className="relative w-full lg:w-64">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={categorySearchText}
+                      onChange={(e) => {
+                        setCategorySearchText(e.target.value)
+                        setShowCategoryDropdown(true)
+                      }}
+                      onFocus={() => setShowCategoryDropdown(true)}
+                      placeholder="Filtrar por categoría..."
+                      className="w-full pl-10 pr-8 py-2 text-sm border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    />
+                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    {(productCategoryFilter || categorySearchText) && (
+                      <button
+                        onClick={() => {
+                          setProductCategoryFilter('')
+                          setCategorySearchText('')
+                          setShowCategoryDropdown(false)
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Category Dropdown */}
+                  {showCategoryDropdown && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+                      <button
+                        onClick={() => {
+                          setProductCategoryFilter('')
+                          setCategorySearchText('')
+                          setShowCategoryDropdown(false)
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${!productCategoryFilter ? 'bg-blue-50 text-blue-600' : ''}`}
+                      >
+                        Todas las categorías
+                      </button>
+                      {categories
+                        .filter(cat => !categorySearchText || cat.name.toLowerCase().includes(categorySearchText.toLowerCase()))
+                        .map((category) => (
+                        <button
+                          key={category.id}
+                          onClick={() => {
+                            setProductCategoryFilter(category.id)
+                            setCategorySearchText(category.name)
+                            setShowCategoryDropdown(false)
+                          }}
+                          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${productCategoryFilter === category.id ? 'bg-blue-50 text-blue-600' : ''}`}
+                        >
+                          {category.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Status Filter */}
+                <div className="w-full lg:w-40">
+                  <select
+                    value={productStatusFilter}
+                    onChange={(e) => setProductStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-colors"
+                  >
+                    <option value="all">Todos los estados</option>
+                    <option value="active">Activo</option>
+                    <option value="inactive">Inactivo</option>
+                  </select>
+                </div>
               </div>
+
+              {/* Clear Filters Button */}
+              {(productSearchName || productCategoryFilter || productStatusFilter !== 'all') && (
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => {
+                      setProductSearchName('')
+                      setProductCategoryFilter('')
+                      setCategorySearchText('')
+                      setProductStatusFilter('all')
+                    }}
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                  >
+                    <X className="h-3 w-3" />
+                    Limpiar filtros
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
+              <h2 className="text-base sm:text-lg font-medium text-gray-900">
+                Productos 
+                <span className="text-sm text-gray-500 font-normal ml-2">
+                  ({products.filter((p) => {
+                    if (productStatusFilter !== 'all' && p.active !== (productStatusFilter === 'active')) return false
+                    if (productCategoryFilter && p.categoryId !== productCategoryFilter && (typeof p.category === 'string' ? p.category : p.category?.id) !== productCategoryFilter) return false
+                    if (productSearchName && !p.name.toLowerCase().includes(productSearchName.toLowerCase())) return false
+                    return true
+                  }).length})
+                </span>
+              </h2>
             </div>
             <div className="overflow-x-auto -mx-3 px-3">
               <table className="min-w-full divide-y divide-gray-200">
@@ -1173,8 +1288,12 @@ export default function AdminPanel() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {products
                     .filter((product) => {
-                      if (productFilter === 'active') return product.active
-                      if (productFilter === 'inactive') return !product.active
+                      // Status filter
+                      if (productStatusFilter !== 'all' && product.active !== (productStatusFilter === 'active')) return false
+                      // Category filter
+                      if (productCategoryFilter && product.categoryId !== productCategoryFilter && (typeof product.category === 'string' ? product.category : product.category?.id) !== productCategoryFilter) return false
+                      // Name search filter
+                      if (productSearchName && !product.name.toLowerCase().includes(productSearchName.toLowerCase())) return false
                       return true
                     })
                     .map((product) => (
