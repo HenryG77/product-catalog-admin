@@ -1,9 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Search, ShoppingCart, Phone, Home, Package, Menu, X } from 'lucide-react'
 import Footer from '@/app/components/Footer'
 import BannerCarousel from '@/app/components/BannerCarousel'
+
+interface ProductImage {
+  id: string
+  url: string
+  order: number
+}
 
 interface Product {
   id: string
@@ -15,6 +22,7 @@ interface Product {
   whatsappMessage: string
   active: boolean
   currency?: string
+  images?: ProductImage[]
 }
 
 interface Category {
@@ -63,6 +71,7 @@ interface Store {
 }
 
 export default function ProductCatalog() {
+  const router = useRouter()
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [banners, setBanners] = useState<Banner[]>([])
@@ -355,18 +364,21 @@ export default function ProductCatalog() {
               
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-5 xl:gap-6">
                 {filteredProducts.map((product) => (
-                  <div key={product.id} className="bg-white rounded-lg shadow-sm sm:shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                    <div className="aspect-square relative bg-gray-100">
+                  <div 
+                    key={product.id} 
+                    onClick={() => router.push(`/producto/${product.id}`)}
+                    className="bg-white rounded-lg shadow-sm sm:shadow-md overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
+                  >
+                    <div className="aspect-square relative bg-gray-100 overflow-hidden">
                       <img
                         src={product.image}
                         alt={product.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute top-2 right-2 bg-green-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-bold">
                         {(() => {
                           const price = product.price || 0
                           const currency = product.currency || 'PYG'
-                          
                           if (currency === 'PYG') {
                             return `Gs. ${price.toLocaleString('es-PY')}`
                           } else if (currency === 'USD') {
@@ -380,10 +392,10 @@ export default function ProductCatalog() {
                       </div>
                     </div>
                     <div className="p-2 sm:p-3 lg:p-4">
-                      <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base line-clamp-1">{product.name}</h3>
+                      <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base line-clamp-1 group-hover:text-blue-600 transition-colors">{product.name}</h3>
                       <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-4 line-clamp-2">{product.description}</p>
                       <button
-                        onClick={() => handleWhatsAppOrder(product)}
+                        onClick={(e) => { e.stopPropagation(); handleWhatsAppOrder(product); }}
                         className="w-full flex items-center justify-center space-x-1 sm:space-x-2 bg-green-500 text-white py-1.5 sm:py-2 lg:py-2.5 rounded-lg hover:bg-green-600 transition-colors text-xs sm:text-sm lg:text-base"
                       >
                         <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />

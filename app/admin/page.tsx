@@ -2,6 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { Package, Settings, Plus, Edit, Trash2, Save, X, Image as ImageIcon, Store, Check } from 'lucide-react'
+import ProductImageGrid, { MultiImageUpload } from '@/app/components/ProductImageGrid'
+
+interface ProductImage {
+  id: string
+  url: string
+  order: number
+}
 
 interface Product {
   id: string
@@ -15,6 +22,7 @@ interface Product {
   active: boolean
   storeId: string
   currency?: string
+  images?: ProductImage[]
 }
 
 interface Category {
@@ -89,6 +97,8 @@ export default function AdminPanel() {
     currency: 'PYG'
   })
   const [editingProduct, setEditingProduct] = useState<string | null>(null)
+  const [productImages, setProductImages] = useState<ProductImage[]>([])
+  const [uploadingImages, setUploadingImages] = useState(false)
 
   // Category form state
   const [categoryForm, setCategoryForm] = useState<Partial<Category>>({
@@ -579,7 +589,7 @@ export default function AdminPanel() {
     }
   }
 
-  const editProduct = (product: Product) => {
+  const editProduct = async (product: Product) => {
     setProductForm(product)
     setEditingProduct(product.id)
     // Set up image preview if product has an image
@@ -590,6 +600,8 @@ export default function AdminPanel() {
         setProductImageFilename(product.image.split('/').pop() || '')
       }
     }
+    // Load product images
+    setProductImages(product.images || [])
   }
 
   const editCategory = (category: Category) => {
@@ -607,6 +619,100 @@ export default function AdminPanel() {
     setProductImageFile(null)
     setProductImagePreview('')
     setProductImageFilename('')
+    setProductImages([])
+    setUploadingImages(false)
+  }
+
+  // Product Image handlers
+  const handleMultiImageUpload = async (files: File[]) => {
+    if (!editingProduct || files.length === 0) return
+    
+    setUploadingImages(true)
+    try {
+      // Upload files first
+      const uploadedUrls: string[] = []
+      
+      for (const file of files) {
+        const formData = new FormData()
+        formData.append('file', file)
+        
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        })
+        
+        if (uploadRes.ok) {
+          const data = await uploadRes.json()
+          uploadedUrls.push(data.url)
+        }
+      }
+      
+      if (uploadedUrls.length === 0) {
+        setError('Error subiendo imágenes')
+        return
+      }
+      
+      // Add images to product
+      const response = await fetch(`/api/products/${editingProduct}/images`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ images: uploadedUrls })
+      })
+      
+      if (response.ok) {
+        const newImages = await response.json()
+        setProductImages(prev => [...prev, ...newImages])
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || 'Error agregando imágenes')
+      }
+    } catch (err) {
+      setError('Error subiendo imágenes')
+      console.error(err)
+    } finally {
+      setUploadingImages(false)
+    }
+  }
+  
+  const handleDeleteProductImage = async (imageId: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta imagen?')) return
+    
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/products/images/${imageId}`, {
+        method: 'DELETE'
+      })
+      
+      if (response.ok) {
+        setProductImages(prev => prev.filter(img => img.id !== imageId))
+      } else {
+        setError('Error eliminando imagen')
+      }
+    } catch (err) {
+      setError('Error eliminando imagen')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  const handleReorderProductImages = async (images: ProductImage[]) => {
+    setProductImages(images)
+    
+    // Update order on server
+    try {
+      await Promise.all(
+        images.map((img, index) =>
+          fetch(`/api/products/images/${img.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order: index })
+          })
+        )
+      )
+    } catch (err) {
+      console.error('Error reordering images:', err)
+    }
   }
 
   // Banner handlers
@@ -955,7 +1061,7 @@ export default function AdminPanel() {
                 )}
                 {(productImagePreview || productForm.image) && (
                   <div className="mt-3">
-                    <p className="text-sm text-gray-600 mb-1">Vista previa:</p>
+                    <p className="text-sm text-gray-600 mb-1">Vista previa imagen principal:</p>
                     <img
                       src={productImagePreview || productForm.image}
                       alt="Vista previa"
@@ -964,6 +1070,45 @@ export default function AdminPanel() {
                   </div>
                 )}
               </div>
+
+              {/* Additional Images Section */}
+              {editingProduct && (
+                <div className="border-t pt-4 mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Imágenes adicionales ({productImages.length}/15)
+                  </label>
+                  
+                  {/* Image Grid */}
+                  <ProductImageGrid
+                    images={productImages}
+                    mainImage={productForm.image}
+                    onDelete={handleDeleteProductImage}
+                    onReorder={handleReorderProductImages}
+                    editable={true}
+                    maxImages={15}
+                  />
+                  
+                  {/* Multi Upload */}
+                  {productImages.length < 15 && (
+                    <div className="mt-4">
+                      <MultiImageUpload
+                        onUpload={handleMultiImageUpload}
+                        disabled={uploadingImages || productImages.length >= 15}
+                        maxFiles={15}
+                        remainingSlots={15 - productImages.length}
+                      />
+                    </div>
+                  )}
+                  
+                  {uploadingImages && (
+                    <div className="mt-2 flex items-center text-sm text-blue-600">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                      Subiendo imágenes...
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex space-x-3">
                 <button
                   type="submit"

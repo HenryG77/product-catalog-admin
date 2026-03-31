@@ -67,20 +67,21 @@ model Category {
 }
 
 model Product {
-  id              String   @id @default(cuid())
+  id              String         @id @default(cuid())
   name            String
   description     String
   price           Float
   image           String
   whatsappMessage String
-  active          Boolean  @default(true)
-  currency        String   @default("PYG")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  active          Boolean        @default(true)
+  currency        String         @default("PYG")
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
   storeId         String
   categoryId      String
-  category        Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  store           Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  category        Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  store           Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  images          ProductImage[]
 
   @@map("products")
 }
@@ -117,4 +118,18 @@ model Banner {
   category        Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   @@map("banners")
+}
+
+model ProductImage {
+  id          String   @id @default(cuid())
+  url         String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  productId   String   @map("product_id")
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
+  @@index([productId])
 }
