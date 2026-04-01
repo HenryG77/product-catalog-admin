@@ -207,6 +207,12 @@ export default function AdminPanel() {
     }
   }, [showCategoryDropdown])
 
+  // Product form dirty state tracking
+  const [productOriginalForm, setProductOriginalForm] = useState<Partial<Product> | null>(null)
+  const [productHasChanges, setProductHasChanges] = useState(false)
+  const [productPendingTab, setProductPendingTab] = useState<'products' | 'categories' | 'store' | 'banners' | null>(null)
+  const [showProductUnsavedModal, setShowProductUnsavedModal] = useState(false)
+
   // Category deletion modal states
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null)
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
@@ -216,6 +222,40 @@ export default function AdminPanel() {
   useEffect(() => {
     fetchData()
   }, [])
+
+  // Detect dirty state for product form
+  useEffect(() => {
+    if (editingProduct && productOriginalForm) {
+      const hasFormChanges = 
+        productForm.name !== productOriginalForm.name ||
+        productForm.description !== productOriginalForm.description ||
+        productForm.price !== productOriginalForm.price ||
+        productForm.categoryId !== productOriginalForm.categoryId ||
+        productForm.image !== productOriginalForm.image ||
+        productForm.whatsappMessage !== productOriginalForm.whatsappMessage ||
+        productForm.active !== productOriginalForm.active ||
+        productForm.currency !== productOriginalForm.currency ||
+        productForm.lastUnits !== productOriginalForm.lastUnits
+      
+      setProductHasChanges(hasFormChanges)
+    }
+  }, [productForm, editingProduct, productOriginalForm])
+
+  // beforeunload handler for browser close
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (productHasChanges || hasChanges) {
+        e.preventDefault()
+        e.returnValue = 'Tienes cambios sin guardar. ¿Deseas salir?'
+        return e.returnValue
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [productHasChanges, hasChanges])
 
   const fetchData = async () => {
     setLoading(true)
@@ -330,8 +370,8 @@ export default function AdminPanel() {
     return parseFloat(cleanValue) || 0
   }
 
-  const handleProductSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleProductSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
     setLoading(true)
     try {
       let imageUrl = productForm.image || ''
@@ -675,6 +715,9 @@ export default function AdminPanel() {
   const editProduct = async (product: Product) => {
     setProductForm(product)
     setEditingProduct(product.id)
+    // Save original form state for dirty checking
+    setProductOriginalForm({ ...product })
+    setProductHasChanges(false)
     // Set up image preview if product has an image
     if (product.image) {
       setProductImagePreview(product.image)
@@ -697,6 +740,11 @@ export default function AdminPanel() {
     setCategoryForm({ name: '', description: '', active: true })
     setEditingProduct(null)
     setEditingCategory(null)
+    // Reset product dirty state
+    setProductOriginalForm(null)
+    setProductHasChanges(false)
+    setShowProductUnsavedModal(false)
+    setProductPendingTab(null)
     // Reset product image states
     setProductImageType('url')
     setProductImageFile(null)
@@ -1018,7 +1066,10 @@ export default function AdminPanel() {
           </button>
           <button
             onClick={() => {
-              if (hasChanges && activeTab === 'store') {
+              if (productHasChanges && activeTab === 'products' && editingProduct) {
+                setProductPendingTab('categories')
+                setShowProductUnsavedModal(true)
+              } else if (hasChanges && activeTab === 'store') {
                 setPendingTab('categories')
                 setShowUnsavedModal(true)
               } else {
@@ -1032,7 +1083,14 @@ export default function AdminPanel() {
             <Store className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" /> <span className="hidden sm:inline">Categorías</span><span className="sm:hidden">Cat.</span>
           </button>
           <button
-            onClick={() => setActiveTab('store')}
+            onClick={() => {
+              if (productHasChanges && activeTab === 'products' && editingProduct) {
+                setProductPendingTab('store')
+                setShowProductUnsavedModal(true)
+              } else {
+                setActiveTab('store')
+              }
+            }}
             className={`py-2 px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center ${
               activeTab === 'store' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
@@ -1040,7 +1098,17 @@ export default function AdminPanel() {
             <Settings className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" /> <span className="hidden sm:inline">Configuración</span><span className="sm:hidden">Config.</span>
           </button>
           <button
-            onClick={() => setActiveTab('banners')}
+            onClick={() => {
+              if (productHasChanges && activeTab === 'products' && editingProduct) {
+                setProductPendingTab('banners')
+                setShowProductUnsavedModal(true)
+              } else if (hasChanges && activeTab === 'store') {
+                setPendingTab('banners')
+                setShowUnsavedModal(true)
+              } else {
+                setActiveTab('banners')
+              }
+            }}
             className={`py-2 px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center ${
               activeTab === 'banners' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
@@ -2445,6 +2513,55 @@ export default function AdminPanel() {
                   setPendingTab(null)
                 }}
                 className="flex-1 border border-gray-300 text-gray-700 px-3 sm:px-4 py-2 rounded-md hover:bg-gray-50 text-sm"
+              >
+                Seguir editando
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Product Unsaved Changes Modal */}
+      {showProductUnsavedModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full mx-auto shadow-xl">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">¿Cambios sin guardar?</h3>
+            <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">
+              Has realizado cambios en el producto que no han sido guardados. ¿Qué deseas hacer?
+            </p>
+            <div className="flex flex-col gap-2 sm:gap-3">
+              <button
+                onClick={async () => {
+                  await handleProductSubmit()
+                  if (productPendingTab) {
+                    setActiveTab(productPendingTab)
+                    setProductPendingTab(null)
+                  }
+                  setShowProductUnsavedModal(false)
+                }}
+                className="w-full bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-blue-700 flex items-center justify-center text-sm"
+              >
+                <Save className="h-4 w-4 mr-2" /> Guardar y salir
+              </button>
+              <button
+                onClick={() => {
+                  cancelEdit()
+                  if (productPendingTab) {
+                    setActiveTab(productPendingTab)
+                    setProductPendingTab(null)
+                  }
+                  setShowProductUnsavedModal(false)
+                }}
+                className="w-full bg-red-600 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-red-700 flex items-center justify-center text-sm"
+              >
+                <Trash2 className="h-4 w-4 mr-2" /> Descartar cambios
+              </button>
+              <button
+                onClick={() => {
+                  setShowProductUnsavedModal(false)
+                  setProductPendingTab(null)
+                }}
+                className="w-full bg-gray-300 text-gray-700 px-3 sm:px-4 py-2 rounded-md hover:bg-gray-400 text-sm"
               >
                 Seguir editando
               </button>
