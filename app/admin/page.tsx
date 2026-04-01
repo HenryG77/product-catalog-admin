@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Package, Settings, Plus, Edit, Trash2, Save, X, Image as ImageIcon, Store, Check, Tag, Search } from 'lucide-react'
 import ProductImageGrid, { MultiImageUpload } from '@/app/components/ProductImageGrid'
 
@@ -22,6 +22,7 @@ interface Product {
   active: boolean
   storeId: string
   currency?: string
+  lastUnits?: number
   images?: ProductImage[]
 }
 
@@ -94,10 +95,12 @@ export default function AdminPanel() {
     image: '',
     whatsappMessage: '',
     active: true,
-    currency: 'PYG'
+    currency: 'PYG',
+    lastUnits: undefined
   })
   const [editingProduct, setEditingProduct] = useState<string | null>(null)
   const [productImages, setProductImages] = useState<ProductImage[]>([])
+  const [newProductImages, setNewProductImages] = useState<{ id: string; url: string; file?: File }[]>([])
   const [uploadingImages, setUploadingImages] = useState(false)
 
   // Category form state
@@ -144,7 +147,7 @@ export default function AdminPanel() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   // Product image upload states
-  const [productImageType, setProductImageType] = useState<'url' | 'file'>('url')
+  const [productImageType, setProductImageType] = useState<'url' | 'file'>('file')
   const [productImageFile, setProductImageFile] = useState<File | null>(null)
   const [productImagePreview, setProductImagePreview] = useState<string>('')
   const [productImageFilename, setProductImageFilename] = useState<string>('')
@@ -185,6 +188,24 @@ export default function AdminPanel() {
   const [categorySearchText, setCategorySearchText] = useState('')
   const [productStatusFilter, setProductStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
+  const categoryDropdownRef = useRef<HTMLDivElement>(null)
+
+  // Click outside handler for category dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
+        setShowCategoryDropdown(false)
+      }
+    }
+
+    if (showCategoryDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showCategoryDropdown])
 
   // Category deletion modal states
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null)
@@ -347,7 +368,8 @@ export default function AdminPanel() {
         image: imageUrl,
         whatsappMessage: productForm.whatsappMessage,
         active: productForm.active,
-        currency: productForm.currency
+        currency: productForm.currency,
+        lastUnits: productForm.lastUnits
       }
 
       const response = await fetch(url, {
@@ -357,6 +379,59 @@ export default function AdminPanel() {
       })
 
       if (response.ok) {
+        const savedProduct = await response.json()
+        
+        // If creating a new product and there are additional images, upload them
+        if (!editingProduct && newProductImages.length > 0) {
+          setUploadingImages(true)
+          try {
+            const uploadedUrls: string[] = []
+            
+            // Upload each file
+            for (const img of newProductImages) {
+              if (img.file) {
+                const formData = new FormData()
+                formData.append('file', img.file)
+                
+                const uploadRes = await fetch('/api/upload', {
+                  method: 'POST',
+                  body: formData
+                })
+                
+                if (uploadRes.ok) {
+                  const data = await uploadRes.json()
+                  uploadedUrls.push(data.url)
+                }
+              }
+            }
+            
+            // Add images to the newly created product
+            if (uploadedUrls.length > 0) {
+              const imgResponse = await fetch(`/api/products/${savedProduct.id}/images`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ images: uploadedUrls })
+              })
+              
+              if (!imgResponse.ok) {
+                console.error('Error adding images to product')
+              }
+            }
+          } catch (err) {
+            console.error('Error uploading additional images:', err)
+          } finally {
+            setUploadingImages(false)
+          }
+          
+          // Clean up object URLs
+          newProductImages.forEach(img => {
+            if (img.url.startsWith('blob:')) {
+              URL.revokeObjectURL(img.url)
+            }
+          })
+          setNewProductImages([])
+        }
+        
         await fetchData()
         setProductForm({
           name: '',
@@ -555,7 +630,8 @@ export default function AdminPanel() {
         image: product.image,
         whatsappMessage: product.whatsappMessage,
         active: !product.active,
-        currency: product.currency
+        currency: product.currency,
+        lastUnits: product.lastUnits
       }
       
       await fetch(`/api/products/${product.id}`, {
@@ -617,7 +693,7 @@ export default function AdminPanel() {
   }
 
   const cancelEdit = () => {
-    setProductForm({ name: '', description: '', price: 0, categoryId: '', image: '', whatsappMessage: '', active: true, currency: 'PYG' })
+    setProductForm({ name: '', description: '', price: 0, categoryId: '', image: '', whatsappMessage: '', active: true, currency: 'PYG', lastUnits: undefined })
     setCategoryForm({ name: '', description: '', active: true })
     setEditingProduct(null)
     setEditingCategory(null)
@@ -627,6 +703,13 @@ export default function AdminPanel() {
     setProductImagePreview('')
     setProductImageFilename('')
     setProductImages([])
+    // Clean up new product image object URLs
+    newProductImages.forEach(img => {
+      if (img.url.startsWith('blob:')) {
+        URL.revokeObjectURL(img.url)
+      }
+    })
+    setNewProductImages([])
     setUploadingImages(false)
   }
 
@@ -720,6 +803,55 @@ export default function AdminPanel() {
     } catch (err) {
       console.error('Error reordering images:', err)
     }
+  }
+
+  // Create mode image handlers (local only, no API calls)
+  const handleNewProductImageUpload = async (files: File[]) => {
+    if (files.length === 0) return
+    
+    const currentCount = newProductImages.length
+    if (currentCount + files.length > 15) {
+      alert(`Máximo 15 imágenes. Actualmente tienes ${currentCount}.`)
+      return
+    }
+
+    setUploadingImages(true)
+    try {
+      const newImages: { id: string; url: string; file: File }[] = []
+      
+      for (const file of files) {
+        // Create local preview URL
+        const previewUrl = URL.createObjectURL(file)
+        newImages.push({
+          id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          url: previewUrl,
+          file: file
+        })
+      }
+      
+      setNewProductImages(prev => [...prev, ...newImages])
+    } catch (err) {
+      setError('Error agregando imágenes')
+      console.error(err)
+    } finally {
+      setUploadingImages(false)
+    }
+  }
+
+  const handleDeleteNewProductImage = (imageId: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta imagen?')) return
+    
+    setNewProductImages(prev => {
+      const imageToDelete = prev.find(img => img.id === imageId)
+      if (imageToDelete?.url.startsWith('blob:')) {
+        URL.revokeObjectURL(imageToDelete.url)
+      }
+      return prev.filter(img => img.id !== imageId)
+    })
+  }
+
+  const handleReorderNewProductImages = (images: { id: string; url: string; file?: File }[]) => {
+    setNewProductImages(images)
   }
 
   // Banner handlers
@@ -1012,6 +1144,41 @@ export default function AdminPanel() {
                     placeholder="Mensaje personalizado para pedidos"
                   />
                 </div>
+                {/* Last Units Section */}
+                <div className="border-t pt-4 mt-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">Últimas Unidades</label>
+                    <button
+                      type="button"
+                      onClick={() => setProductForm({ 
+                        ...productForm, 
+                        lastUnits: productForm.lastUnits ? undefined : 1 
+                      })}
+                      className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 items-center rounded-full transition-colors ${
+                        productForm.lastUnits ? 'bg-orange-500' : 'bg-gray-200'
+                      }`}
+                    >
+                      <span className={`inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform ${
+                        productForm.lastUnits ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
+                      }`} />
+                    </button>
+                    <span className={`text-xs sm:text-sm font-medium ${productForm.lastUnits ? 'text-orange-600' : 'text-gray-500'}`}>
+                      {productForm.lastUnits ? 'Activado' : 'Desactivado'}
+                    </span>
+                  </div>
+                  {productForm.lastUnits && (
+                    <div className="mt-2">
+                      <label className="block text-xs text-gray-600 mb-1">Cantidad disponible:</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={productForm.lastUnits}
+                        onChange={(e) => setProductForm({ ...productForm, lastUnits: parseInt(e.target.value) || 1 })}
+                        className="block w-32 text-sm border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="flex items-center space-x-2 sm:space-x-3">
                 <label className="block text-xs sm:text-sm font-medium text-gray-700">Estado</label>
@@ -1049,75 +1216,91 @@ export default function AdminPanel() {
                   </button>
                 </div>
                 {productImageType === 'url' ? (
-                  <input
-                    type="url"
-                    value={productForm.image || ''}
-                    onChange={(e) => {
-                      setProductForm({ ...productForm, image: e.target.value })
-                      setProductImagePreview(e.target.value)
-                    }}
-                    className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="https://ejemplo.com/imagen.jpg"
-                  />
-                ) : (
-                  <div className="space-y-2">
+                  <>
                     <input
-                      type="file"
-                      accept="image/*"
+                      type="url"
+                      value={productForm.image || ''}
                       onChange={(e) => {
-                        const file = e.target.files?.[0]
-                        if (file) {
-                          setProductImageFile(file)
-                          setProductImagePreview(URL.createObjectURL(file))
-                          setProductImageFilename(file.name)
-                        }
+                        setProductForm({ ...productForm, image: e.target.value })
+                        setProductImagePreview(e.target.value)
                       }}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="https://ejemplo.com/imagen.jpg"
                     />
-                    {productImageFilename && (
-                      <p className="text-sm text-gray-600">Archivo: {productImageFilename}</p>
+                    {(productImagePreview || productForm.image) && (
+                      <div className="mt-3">
+                        <p className="text-sm text-gray-600 mb-1">Vista previa imagen principal:</p>
+                        <img
+                          src={productImagePreview || productForm.image}
+                          alt="Vista previa"
+                          className="h-24 w-24 object-cover rounded-md border"
+                        />
+                      </div>
                     )}
-                  </div>
-                )}
-                {(productImagePreview || productForm.image) && (
-                  <div className="mt-3">
-                    <p className="text-sm text-gray-600 mb-1">Vista previa imagen principal:</p>
-                    <img
-                      src={productImagePreview || productForm.image}
-                      alt="Vista previa"
-                      className="h-24 w-24 object-cover rounded-md border"
-                    />
-                  </div>
+                  </>
+                ) : (
+                  // In file mode, show only the multi-image grid (no single file input)
+                  null
                 )}
               </div>
 
-              {/* Additional Images Section */}
-              {editingProduct && (
+              {/* Additional Images Section - Only show in file mode */}
+              {productImageType === 'file' && (
                 <div className="border-t pt-4 mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Imágenes adicionales ({productImages.length}/15)
+                    {editingProduct 
+                      ? `Imágenes adicionales (${productImages.length}/15)`
+                      : `Imágenes adicionales (${newProductImages.length}/15)`
+                    }
                   </label>
                   
-                  {/* Image Grid */}
-                  <ProductImageGrid
-                    images={productImages}
-                    mainImage={productForm.image}
-                    onDelete={handleDeleteProductImage}
-                    onReorder={handleReorderProductImages}
-                    editable={true}
-                    maxImages={15}
-                  />
-                  
-                  {/* Multi Upload */}
-                  {productImages.length < 15 && (
-                    <div className="mt-4">
-                      <MultiImageUpload
-                        onUpload={handleMultiImageUpload}
-                        disabled={uploadingImages || productImages.length >= 15}
-                        maxFiles={15}
-                        remainingSlots={15 - productImages.length}
+                  {/* Image Grid - Use appropriate data based on mode */}
+                  {editingProduct ? (
+                    <>
+                      <ProductImageGrid
+                        images={productImages}
+                        mainImage={productForm.image}
+                        onDelete={handleDeleteProductImage}
+                        onReorder={handleReorderProductImages}
+                        editable={true}
+                        maxImages={15}
                       />
-                    </div>
+                      
+                      {/* Multi Upload for Edit Mode */}
+                      {productImages.length < 15 && (
+                        <div className="mt-4">
+                          <MultiImageUpload
+                            onUpload={handleMultiImageUpload}
+                            disabled={uploadingImages || productImages.length >= 15}
+                            maxFiles={15}
+                            remainingSlots={15 - productImages.length}
+                          />
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <ProductImageGrid
+                        images={newProductImages}
+                        mainImage={productForm.image}
+                        onDelete={handleDeleteNewProductImage}
+                        onReorder={handleReorderNewProductImages}
+                        editable={true}
+                        maxImages={15}
+                      />
+                      
+                      {/* Multi Upload for Create Mode */}
+                      {newProductImages.length < 15 && (
+                        <div className="mt-4">
+                          <MultiImageUpload
+                            onUpload={handleNewProductImageUpload}
+                            disabled={uploadingImages || newProductImages.length >= 15}
+                            maxFiles={15}
+                            remainingSlots={15 - newProductImages.length}
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
                   
                   {uploadingImages && (
@@ -1167,7 +1350,7 @@ export default function AdminPanel() {
                 </div>
 
                 {/* Category Filter with Autocomplete */}
-                <div className="relative w-full lg:w-64">
+                <div className="relative w-full lg:w-64" ref={categoryDropdownRef}>
                   <div className="relative">
                     <input
                       type="text"
