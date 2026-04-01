@@ -75,6 +75,7 @@ model Product {
   whatsappMessage String
   active          Boolean        @default(true)
   currency        String         @default("PYG")
+  lastUnits       Int?           @db.Int
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   storeId         String

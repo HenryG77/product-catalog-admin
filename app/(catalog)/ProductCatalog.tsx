@@ -22,6 +22,7 @@ interface Product {
   whatsappMessage: string
   active: boolean
   currency?: string
+  lastUnits?: number
   images?: ProductImage[]
 }
 
@@ -375,6 +376,12 @@ export default function ProductCatalog() {
                         alt={product.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
+                      {/* Last Units Tag */}
+                      {product.lastUnits && product.lastUnits > 0 && (
+                        <div className="absolute top-2 left-2 bg-orange-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-bold">
+                          ¡Últimas {product.lastUnits} unidades!
+                        </div>
+                      )}
                       <div className="absolute top-2 right-2 bg-green-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-bold">
                         {(() => {
                           const price = product.price || 0
