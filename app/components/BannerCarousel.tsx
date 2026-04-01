@@ -81,7 +81,7 @@ export default function BannerCarousel({ banners, store }: BannerCarouselProps) 
   return (
     <div className="relative w-full mb-6 sm:mb-8">
       {/* Main carousel container */}
-      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl aspect-[16/9] sm:aspect-[21/9] bg-gray-100">
+      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl w-full h-[360px] bg-gray-100">
         {activeBanners.map((banner, index) => (
           <div
             key={banner.id}
