@@ -3,21 +3,6 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
-    // Get pagination params from query string
-    const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1', 10)
-    const limit = parseInt(searchParams.get('limit') || '15', 10)
-
-    // Validate params
-    const validPage = Math.max(1, page)
-    const validLimit = Math.min(Math.max(1, limit), 100) // Max 100 items per page
-
-    const skip = (validPage - 1) * validLimit
-
-    // Get total count for pagination metadata
-    const total = await prisma.product.count()
-
-    // Get paginated products
     const products = await prisma.product.findMany({
       include: {
         category: true,
@@ -26,22 +11,10 @@ export async function GET(request: NextRequest) {
           orderBy: { order: 'asc' }
         }
       },
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take: validLimit
+      orderBy: { createdAt: 'desc' }
     })
 
-    const totalPages = Math.ceil(total / validLimit)
-
-    return NextResponse.json({
-      products,
-      pagination: {
-        total,
-        totalPages,
-        currentPage: validPage,
-        limit: validLimit
-      }
-    })
+    return NextResponse.json(products)
   } catch (error) {
     console.error('Error fetching products:', error)
     return NextResponse.json({ error: 'Error fetching products' }, { status: 500 })

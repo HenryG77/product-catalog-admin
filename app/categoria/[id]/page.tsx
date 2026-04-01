@@ -47,20 +47,20 @@ interface Store {
   primaryColor: string
   secondaryColor: string
   description: string
-  footerCopyright?: string
-  showFacebook?: boolean
+  footerCopyright: string
+  showFacebook: boolean
   facebookUrl?: string
-  showInstagram?: boolean
+  showInstagram: boolean
   instagramUrl?: string
-  showTiktok?: boolean
+  showTiktok: boolean
   tiktokUrl?: string
-  showAddress?: boolean
+  showAddress: boolean
   addressText?: string
-  showPhone?: boolean
+  showPhone: boolean
   phoneText?: string
-  showEmail?: boolean
+  showEmail: boolean
   emailText?: string
-  showHours?: boolean
+  showHours: boolean
   hoursText?: string
 }
 

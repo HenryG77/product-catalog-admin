@@ -100,7 +100,7 @@ export default function AdminPanel() {
   })
   const [editingProduct, setEditingProduct] = useState<string | null>(null)
   const [productImages, setProductImages] = useState<ProductImage[]>([])
-  const [newProductImages, setNewProductImages] = useState<{ id: string; url: string; file?: File }[]>([])
+  const [newProductImages, setNewProductImages] = useState<{ id: string; url: string; file?: File; order: number }[]>([])
   const [uploadingImages, setUploadingImages] = useState(false)
 
   // Category form state
@@ -173,7 +173,7 @@ export default function AdminPanel() {
 
   // Unsaved changes tracking
   const [hasChanges, setHasChanges] = useState(false)
-  const [pendingTab, setPendingTab] = useState<'products' | 'categories' | 'store' | null>(null)
+  const [pendingTab, setPendingTab] = useState<'products' | 'categories' | 'store' | 'banners' | null>(null)
   const [showUnsavedModal, setShowUnsavedModal] = useState(false)
 
   // Category filter state
@@ -275,9 +275,17 @@ export default function AdminPanel() {
 
       if (productsRes.ok) {
         const productsData = await productsRes.json()
-        setProducts(productsData.products)
-        setTotalProducts(productsData.pagination.total)
-        setTotalPages(productsData.pagination.totalPages)
+        // API devuelve array directo, no paginado
+        if (Array.isArray(productsData)) {
+          setProducts(productsData)
+          setTotalProducts(productsData.length)
+          setTotalPages(1)
+        } else {
+          // Fallback por si vuelve paginación
+          setProducts(productsData.products || [])
+          setTotalProducts(productsData.pagination?.total || 0)
+          setTotalPages(productsData.pagination?.totalPages || 1)
+        }
       }
 
       if (categoriesRes.ok) {
@@ -873,15 +881,17 @@ export default function AdminPanel() {
 
     setUploadingImages(true)
     try {
-      const newImages: { id: string; url: string; file: File }[] = []
+      const newImages: { id: string; url: string; file?: File; order: number }[] = []
       
-      for (const file of files) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
         // Create local preview URL
         const previewUrl = URL.createObjectURL(file)
         newImages.push({
           id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           url: previewUrl,
-          file: file
+          file: file,
+          order: i
         })
       }
       
@@ -906,7 +916,7 @@ export default function AdminPanel() {
     })
   }
 
-  const handleReorderNewProductImages = (images: { id: string; url: string; file?: File }[]) => {
+  const handleReorderNewProductImages = (images: { id: string; url: string; file?: File; order: number }[]) => {
     setNewProductImages(images)
   }
 
@@ -1523,12 +1533,12 @@ export default function AdminPanel() {
               <h2 className="text-base sm:text-lg font-medium text-gray-900">
                 Productos 
                 <span className="text-sm text-gray-500 font-normal ml-2">
-                  ({products.filter((p) => {
+                  ({Array.isArray(products) ? products.filter((p) => {
                     if (productStatusFilter !== 'all' && p.active !== (productStatusFilter === 'active')) return false
                     if (productCategoryFilter && p.categoryId !== productCategoryFilter && (typeof p.category === 'string' ? p.category : p.category?.id) !== productCategoryFilter) return false
                     if (productSearchName && !p.name.toLowerCase().includes(productSearchName.toLowerCase())) return false
                     return true
-                  }).length})
+                  }).length : 0})
                 </span>
               </h2>
             </div>
@@ -1545,7 +1555,7 @@ export default function AdminPanel() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {products
+                  {(Array.isArray(products) ? products : [])
                     .filter((product) => {
                       // Status filter
                       if (productStatusFilter !== 'all' && product.active !== (productStatusFilter === 'active')) return false
