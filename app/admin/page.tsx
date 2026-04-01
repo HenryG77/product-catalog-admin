@@ -190,6 +190,12 @@ export default function AdminPanel() {
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
   const categoryDropdownRef = useRef<HTMLDivElement>(null)
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(15)
+  const [totalProducts, setTotalProducts] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+
   // Click outside handler for category dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -257,11 +263,11 @@ export default function AdminPanel() {
     }
   }, [productHasChanges, hasChanges])
 
-  const fetchData = async () => {
+  const fetchData = async (page: number = 1) => {
     setLoading(true)
     try {
       const [productsRes, categoriesRes, storeRes, bannersRes] = await Promise.all([
-        fetch('/api/products'),
+        fetch(`/api/products?page=${page}&limit=${itemsPerPage}`),
         fetch('/api/categories'),
         fetch('/api/store'),
         fetch('/api/banners?all=true')
@@ -269,7 +275,9 @@ export default function AdminPanel() {
 
       if (productsRes.ok) {
         const productsData = await productsRes.json()
-        setProducts(productsData)
+        setProducts(productsData.products)
+        setTotalProducts(productsData.pagination.total)
+        setTotalPages(productsData.pagination.totalPages)
       }
 
       if (categoriesRes.ok) {
