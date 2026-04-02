@@ -351,7 +351,7 @@ export default function ProductCatalog() {
                   <div 
                     key={product.id} 
                     onClick={() => router.push(`/producto/${product.id}`)}
-                    className="bg-white rounded-lg shadow-sm sm:shadow-md overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
+                    className="bg-white rounded-lg shadow-sm sm:shadow-md overflow-hidden hover:shadow-lg transition-all cursor-pointer group flex flex-col"
                   >
                     <div className="aspect-square relative bg-gray-100 overflow-hidden">
                       <img
@@ -381,12 +381,12 @@ export default function ProductCatalog() {
                         })()}
                       </div>
                     </div>
-                    <div className="p-2 sm:p-3 lg:p-4">
+                    <div className="p-2 sm:p-3 lg:p-4 flex flex-col flex-grow">
                       <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base line-clamp-1 group-hover:text-blue-600 transition-colors">{product.name}</h3>
-                      <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-4 line-clamp-2">{product.description}</p>
+                      <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-4 line-clamp-2 flex-grow">{product.description}</p>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleWhatsAppOrder(product); }}
-                        className="w-full flex items-center justify-center space-x-1 sm:space-x-2 bg-green-500 text-white py-1.5 sm:py-2 lg:py-2.5 rounded-lg hover:bg-green-600 transition-colors text-xs sm:text-sm lg:text-base"
+                        className="w-full flex items-center justify-center space-x-1 sm:space-x-2 bg-green-500 text-white py-1.5 sm:py-2 lg:py-2.5 rounded-lg hover:bg-green-600 transition-colors text-xs sm:text-sm lg:text-base mt-auto"
                       >
                         <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
                         <span className="hidden sm:inline">Pedir por WhatsApp</span>
