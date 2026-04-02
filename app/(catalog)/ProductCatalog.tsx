@@ -54,20 +54,20 @@ interface Store {
   secondaryColor: string
   description: string
   // Footer fields (optional)
-  footerCopyright?: string
-  showFacebook?: boolean
+  footerCopyright: string
+  showFacebook: boolean
   facebookUrl?: string
-  showInstagram?: boolean
+  showInstagram: boolean
   instagramUrl?: string
-  showTiktok?: boolean
+  showTiktok: boolean
   tiktokUrl?: string
-  showAddress?: boolean
+  showAddress: boolean
   addressText?: string
-  showPhone?: boolean
+  showPhone: boolean
   phoneText?: string
-  showEmail?: boolean
+  showEmail: boolean
   emailText?: string
-  showHours?: boolean
+  showHours: boolean
   hoursText?: string
 }
 
@@ -332,23 +332,6 @@ export default function ProductCatalog() {
                     '--tw-ring-color': store?.primaryColor || '#3b82f6'
                   } as React.CSSProperties}
                 />
-              </div>
-            </div>
-
-            {/* Hero Banner */}
-            <div 
-              className="mb-6 sm:mb-8 lg:mb-12 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 xl:p-12 text-white"
-              style={{
-                background: `linear-gradient(to right, ${store?.primaryColor || '#3b82f6'}, ${store?.secondaryColor || '#1e40af'})`
-              }}
-            >
-              <div className="max-w-3xl">
-                <h2 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold mb-2 sm:mb-4">
-                  La cartera perfecta para la mujer que sabe lo que vale
-                </h2>
-                <p className="text-sm sm:text-base lg:text-lg xl:text-xl opacity-90">
-                  Descubre nuestra exclusiva colección de productos premium diseñados para ti
-                </p>
               </div>
             </div>
 
