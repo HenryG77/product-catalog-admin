@@ -20,14 +20,21 @@ export default function ProductImageGallery({
   mainImage,
   productName
 }: ProductImageGalleryProps) {
-  const [selectedImage, setSelectedImage] = useState(mainImage)
+  // Sort images by order
+  const sortedImages = [...images].sort((a, b) => a.order - b.order)
+  
+  // Use first grid image as main, fallback to mainImage prop if no grid images
+  const firstImage = sortedImages.length > 0 ? sortedImages[0].url : mainImage
+  
+  const [selectedImage, setSelectedImage] = useState(firstImage)
   const [isZoomed, setIsZoomed] = useState(false)
   const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 })
   const [showFullscreen, setShowFullscreen] = useState(false)
   const imageRef = useRef<HTMLDivElement>(null)
 
-  // Combine main image with additional images
-  const allImages = [mainImage, ...images.map(img => img.url)]
+  // Combine: main image first, then remaining grid images
+  const remainingImages = sortedImages.slice(1).map(img => img.url)
+  const allImages = [firstImage, ...remainingImages]
   const currentIndex = allImages.indexOf(selectedImage)
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {

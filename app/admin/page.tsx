@@ -229,6 +229,11 @@ export default function AdminPanel() {
     fetchData()
   }, [])
 
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [productSearchName, productCategoryFilter, productStatusFilter])
+
   // Detect dirty state for product form
   useEffect(() => {
     if (editingProduct && productOriginalForm) {
@@ -1572,10 +1577,12 @@ export default function AdminPanel() {
                     <tr key={product.id} className="hover:bg-gray-50">
                       <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
                         {(() => {
-                          // Get first image from gallery or fall back to main image
-                          const imageUrl = product.images && product.images.length > 0 
-                            ? product.images[0].url 
-                            : product.image
+                          // Get first image from gallery (sorted by order) or fall back to main image
+                          let imageUrl = product.image
+                          if (product.images && product.images.length > 0) {
+                            const sortedImages = [...product.images].sort((a, b) => a.order - b.order)
+                            imageUrl = sortedImages[0].url
+                          }
                           
                           if (imageUrl) {
                             return <img src={imageUrl} alt={product.name} className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover" />
