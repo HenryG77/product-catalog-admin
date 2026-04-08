@@ -1519,6 +1519,9 @@ export default function AdminPanel() {
                       setProductCategoryFilter('')
                       setCategorySearchText('')
                       setProductStatusFilter('all')
+                      // Reset pagination when clearing filters
+                      setCurrentPage(1)
+                      fetchData(1)
                     }}
                     className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
                   >
@@ -1568,13 +1571,21 @@ export default function AdminPanel() {
                     .map((product) => (
                     <tr key={product.id} className="hover:bg-gray-50">
                       <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
-                        {product.image ? (
-                          <img src={product.image} alt={product.name} className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover" />
-                        ) : (
-                          <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                            <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
-                          </div>
-                        )}
+                        {(() => {
+                          // Get first image from gallery or fall back to main image
+                          const imageUrl = product.images && product.images.length > 0 
+                            ? product.images[0].url 
+                            : product.image
+                          
+                          if (imageUrl) {
+                            return <img src={imageUrl} alt={product.name} className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover" />
+                          }
+                          return (
+                            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                              <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+                            </div>
+                          )
+                        })()}
                       </td>
                       <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
                         <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[100px] sm:max-w-[200px]">{product.name}</div>
