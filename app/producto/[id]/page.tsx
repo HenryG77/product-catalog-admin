@@ -235,7 +235,11 @@ export default function ProductDetailPage() {
           <div className="lg:sticky lg:top-24 lg:h-fit">
             <ProductImageGallery
               images={product.images || []}
-              mainImage={product.image}
+              mainImage={
+                product.images && product.images.length > 0
+                  ? [...product.images].sort((a, b) => a.order - b.order)[0].url
+                  : product.image
+              }
               productName={product.name}
             />
           </div>
