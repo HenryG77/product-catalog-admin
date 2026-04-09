@@ -95,10 +95,19 @@ export default function ProductDetailPage() {
       return
     }
 
-    const message = encodeURIComponent(
-      product.whatsappMessage || 
-      `Hola! Me interesa comprar el producto: ${product.name} (Cantidad: ${quantity})`
-    )
+    const unitPrice = formatPrice(product.price, product.currency)
+    const subtotal = quantity > 1 ? formatPrice(product.price * quantity, product.currency) : null
+    
+    // Construir el mensaje con detalles del pedido
+    const orderDetails = subtotal 
+      ? `\n\nProducto: ${product.name}\nCantidad: ${quantity}\nPrecio unitario: ${unitPrice}\nSubtotal: ${subtotal}`
+      : `\n\nProducto: ${product.name}\nCantidad: ${quantity}\nPrecio: ${unitPrice}`
+
+    // Usar mensaje personalizado si existe, sino usar el por defecto
+    const baseMessage = product.whatsappMessage || 'Hola! Quiero hacer un pedido:'
+    const fullMessage = baseMessage + orderDetails
+
+    const message = encodeURIComponent(fullMessage)
     const whatsappUrl = `https://wa.me/${product.store.whatsapp}?text=${message}`
     window.open(whatsappUrl, '_blank')
   }
@@ -322,6 +331,22 @@ export default function ProductDetailPage() {
                   >
                     +
                   </button>
+                </div>
+
+                {/* Subtotal */}
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Precio unitario:</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {formatPrice(product.price, product.currency)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-200">
+                    <span className="text-base font-semibold text-gray-900">Subtotal:</span>
+                    <span className="text-xl font-bold" style={{ color: primaryColor }}>
+                      {formatPrice(product.price * quantity, product.currency)}
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
