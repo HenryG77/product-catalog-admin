@@ -749,6 +749,8 @@ export default function AdminPanel() {
     }
     // Load product images
     setProductImages(product.images || [])
+    // Scroll to top to show the form
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const editCategory = (category: Category) => {
@@ -834,9 +836,6 @@ export default function AdminPanel() {
   }
   
   const handleDeleteProductImage = async (imageId: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta imagen?')) return
-    
-    setLoading(true)
     try {
       const response = await fetch(`/api/products/images/${imageId}`, {
         method: 'DELETE'
@@ -845,13 +844,10 @@ export default function AdminPanel() {
       if (response.ok) {
         setProductImages(prev => prev.filter(img => img.id !== imageId))
       } else {
-        setError('Error eliminando imagen')
+        console.error('Error eliminando imagen')
       }
     } catch (err) {
-      setError('Error eliminando imagen')
-      console.error(err)
-    } finally {
-      setLoading(false)
+      console.error('Error eliminando imagen:', err)
     }
   }
   
@@ -910,8 +906,6 @@ export default function AdminPanel() {
   }
 
   const handleDeleteNewProductImage = (imageId: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta imagen?')) return
-    
     setNewProductImages(prev => {
       const imageToDelete = prev.find(img => img.id === imageId)
       if (imageToDelete?.url.startsWith('blob:')) {

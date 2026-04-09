@@ -121,11 +121,17 @@ export default function ProductImageGrid({
             {/* Delete button */}
             {editable && onDelete && image.id !== 'main' && (
               <button
-                onClick={() => onDelete(image.id)}
-                className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-colors"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDelete(image.id)
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition-colors z-20 cursor-pointer touch-manipulation"
                 title="Eliminar imagen"
+                aria-label="Eliminar imagen"
               >
-                <X className="h-3 w-3" />
+                <X className="h-4 w-4" />
               </button>
             )}
             

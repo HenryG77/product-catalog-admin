@@ -365,7 +365,7 @@ export default function ProductCatalog() {
                           ¡Últimas {product.lastUnits} unidades!
                         </div>
                       )}
-                      <div className="absolute top-2 right-2 bg-green-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-bold">
+                      <div className="absolute top-2 right-2 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-bold" style={{ backgroundColor: store?.primaryColor || '#3b82f6' }}>
                         {(() => {
                           const price = product.price || 0
                           const currency = product.currency || 'PYG'
@@ -388,7 +388,8 @@ export default function ProductCatalog() {
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleWhatsAppOrder(product); }}
-                        className="w-full flex items-center justify-center space-x-1 sm:space-x-2 bg-green-500 text-white py-1.5 sm:py-2 lg:py-2.5 rounded-lg hover:bg-green-600 transition-colors text-xs sm:text-sm lg:text-base"
+                        className="w-full flex items-center justify-center space-x-1 sm:space-x-2 text-white py-1.5 sm:py-2 lg:py-2.5 rounded-lg transition-colors text-xs sm:text-sm lg:text-base hover:opacity-90"
+                        style={{ backgroundColor: store?.primaryColor || '#3b82f6' }}
                       >
                         <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
                         <span className="hidden sm:inline">Pedir por WhatsApp</span>
