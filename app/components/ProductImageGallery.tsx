@@ -24,10 +24,8 @@ export default function ProductImageGallery({
   // Sort images by order
   const sortedImages = [...images].sort((a, b) => a.order - b.order)
   
-  // Use first grid image as main, fallback to mainImage prop if no grid images
-  const firstImage = sortedImages.length > 0 ? sortedImages[0].url : mainImage
-  
-  const [selectedImage, setSelectedImage] = useState(firstImage)
+  // Main image is always the product.image prop, gallery images are additional
+  const [selectedImage, setSelectedImage] = useState(mainImage)
   const [isZoomed, setIsZoomed] = useState(false)
   const [isOverNavArrow, setIsOverNavArrow] = useState(false)
   const [isMouseOverContainer, setIsMouseOverContainer] = useState(false)
@@ -36,9 +34,9 @@ export default function ProductImageGallery({
   const [showFullscreen, setShowFullscreen] = useState(false)
   const imageRef = useRef<HTMLDivElement>(null)
 
-  // Combine: main image first, then remaining grid images
-  const remainingImages = sortedImages.slice(1).map(img => img.url)
-  const allImages = [firstImage, ...remainingImages]
+  // Combine: main image first, then all gallery images
+  const galleryImages = sortedImages.map(img => img.url)
+  const allImages = [mainImage, ...galleryImages]
   const currentIndex = allImages.indexOf(selectedImage)
 
   // Soporte de teclado para fullscreen

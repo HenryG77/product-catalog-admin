@@ -29,8 +29,12 @@ export default function ProductImageGrid({
   const [draggedId, setDraggedId] = useState<string | null>(null)
   
   // Combine main image with additional images for display
+  // Filter out any image that has the same URL as the main image to avoid duplicates
+  const filteredImages = mainImage 
+    ? images.filter(img => img.url !== mainImage)
+    : images
   const allImages = mainImage 
-    ? [{ id: 'main', url: mainImage, order: -1 }, ...images]
+    ? [{ id: 'main', url: mainImage, order: -1 }, ...filteredImages]
     : images
 
   const handleDragStart = (id: string) => {

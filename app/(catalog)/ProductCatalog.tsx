@@ -355,7 +355,7 @@ export default function ProductCatalog() {
                   >
                     <div className="aspect-square relative bg-gray-100 overflow-hidden">
                       <img
-                        src={product.images && product.images.length > 0 ? product.images[0].url : product.image}
+                        src={product.image}
                         alt={product.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
