@@ -201,7 +201,8 @@ export default function ProductCatalog() {
               href={`https://wa.me/${store?.whatsapp.replace(/\D/g, '')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:flex items-center space-x-1 lg:space-x-2 bg-green-500 text-white px-3 lg:px-4 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm lg:text-base"
+              className="hidden sm:flex items-center space-x-1 lg:space-x-2 text-white px-3 lg:px-4 py-2 rounded-lg transition-colors text-sm lg:text-base hover:opacity-90"
+              style={{ backgroundColor: store?.primaryColor || '#3b82f6' }}
             >
               <Phone className="h-4 w-4" />
               <span>Contactar</span>
@@ -226,7 +227,8 @@ export default function ProductCatalog() {
                 href={`https://wa.me/${store?.whatsapp.replace(/\D/g, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center space-x-2 bg-green-500 text-white px-4 py-3 rounded-lg hover:bg-green-600 transition-colors w-full"
+                className="flex items-center justify-center space-x-2 text-white px-4 py-3 rounded-lg transition-colors w-full hover:opacity-90"
+                style={{ backgroundColor: store?.primaryColor || '#3b82f6' }}
               >
                 <Phone className="h-5 w-5" />
                 <span className="font-medium">Contactar por WhatsApp</span>
