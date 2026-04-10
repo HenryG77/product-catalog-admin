@@ -126,20 +126,77 @@ export default function ProductDetailPage() {
     }
   }
 
+  const [showShareToast, setShowShareToast] = useState(false)
+  const [shareToastMessage, setShareToastMessage] = useState('')
+
+  const showToast = (message: string) => {
+    setShareToastMessage(message)
+    setShowShareToast(true)
+    setTimeout(() => setShowShareToast(false), 3000)
+  }
+
   const handleShare = async () => {
-    if (navigator.share) {
+    const shareUrl = window.location.href
+    const shareTitle = product?.name || 'Producto'
+    const shareText = product?.description || ''
+
+    // Intentar usar la Web Share API (funciona en móviles modernos)
+    if (navigator.share && navigator.canShare && navigator.canShare({ url: shareUrl })) {
       try {
         await navigator.share({
-          title: product?.name || 'Producto',
-          text: product?.description || '',
-          url: window.location.href,
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
         })
+        return
       } catch (err) {
-        console.log('Error sharing:', err)
+        // Si el usuario canceló, no mostrar error
+        if ((err as Error).name !== 'AbortError') {
+          console.log('Error sharing:', err)
+        }
       }
-    } else {
-      navigator.clipboard.writeText(window.location.href)
-      alert('Link copiado al portapapeles')
+    }
+
+    // Fallback: copiar al portapapeles
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareUrl)
+        showToast('Link copiado al portapapeles')
+      } else {
+        // Fallback para navegadores antiguos
+        const textArea = document.createElement('textarea')
+        textArea.value = shareUrl
+        textArea.style.position = 'fixed'
+        textArea.style.left = '-9999px'
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+        showToast('Link copiado al portapapeles')
+      }
+    } catch (err) {
+      console.error('Error copying to clipboard:', err)
+      // Último fallback: abrir diálogo nativo de compartir
+      const shareDialog = window.confirm(
+        `Compartir: ${shareTitle}\n\n${shareUrl}\n\n¿Deseas copiar el link?`
+      )
+      if (shareDialog) {
+        // Intentar seleccionar el texto para que el usuario pueda copiarlo manualmente
+        const range = document.createRange()
+        const selection = window.getSelection()
+        // Crear un elemento temporal con el URL
+        const tempEl = document.createElement('div')
+        tempEl.textContent = shareUrl
+        tempEl.style.position = 'fixed'
+        tempEl.style.left = '-9999px'
+        document.body.appendChild(tempEl)
+        range.selectNodeContents(tempEl)
+        selection?.removeAllRanges()
+        selection?.addRange(range)
+        document.execCommand('copy')
+        document.body.removeChild(tempEl)
+        selection?.removeAllRanges()
+      }
     }
   }
 
@@ -447,6 +504,21 @@ export default function ProductDetailPage() {
           showHours: false
         }}
       />
+
+      {/* Share Toast Notification */}
+      {showShareToast && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div 
+            className="px-4 py-3 rounded-lg shadow-lg text-white font-medium text-sm flex items-center gap-2"
+            style={{ backgroundColor: primaryColor }}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            {shareToastMessage}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
