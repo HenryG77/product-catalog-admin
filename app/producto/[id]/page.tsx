@@ -244,11 +244,7 @@ export default function ProductDetailPage() {
           <div className="lg:sticky lg:top-24 lg:h-fit">
             <ProductImageGallery
               images={product.images || []}
-              mainImage={
-                product.images && product.images.length > 0
-                  ? [...product.images].sort((a, b) => a.order - b.order)[0].url
-                  : product.image
-              }
+              mainImage={product.image}
               productName={product.name}
             />
           </div>
@@ -357,7 +353,7 @@ export default function ProductDetailPage() {
                 onClick={handleWhatsAppOrder}
                 disabled={!product.active}
                 className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-xl font-semibold text-white transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                style={{ backgroundColor: '#25D366' }}
+                style={{ backgroundColor: primaryColor }}
               >
                 <ShoppingCart className="h-5 w-5" />
                 Pedir por WhatsApp

@@ -396,6 +396,7 @@ export default function AdminPanel() {
     setLoading(true)
     try {
       let imageUrl = productForm.image || ''
+      let remainingImages = [...newProductImages]
 
       // If file upload is selected and there's a file, upload it first
       if (productImageType === 'file' && productImageFile) {
@@ -415,6 +416,28 @@ export default function AdminPanel() {
 
         const uploadData = await uploadResponse.json()
         imageUrl = uploadData.url
+      }
+      
+      // If creating a new product and no main image is set, but there are images in the grid,
+      // use the first one as the main image
+      if (!editingProduct && !imageUrl && remainingImages.length > 0) {
+        const firstImage = remainingImages[0]
+        if (firstImage.file) {
+          const formData = new FormData()
+          formData.append('file', firstImage.file)
+          
+          const uploadResponse = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+          })
+          
+          if (uploadResponse.ok) {
+            const uploadData = await uploadResponse.json()
+            imageUrl = uploadData.url
+            // Remove the first image from remaining images (it will be the main image)
+            remainingImages = remainingImages.slice(1)
+          }
+        }
       }
 
       const url = editingProduct ? `/api/products/${editingProduct}` : '/api/products'
@@ -443,13 +466,13 @@ export default function AdminPanel() {
         const savedProduct = await response.json()
         
         // If creating a new product and there are additional images, upload them
-        if (!editingProduct && newProductImages.length > 0) {
+        if (!editingProduct && remainingImages.length > 0) {
           setUploadingImages(true)
           try {
             const uploadedUrls: string[] = []
             
-            // Upload each file
-            for (const img of newProductImages) {
+            // Upload each file (remaining images exclude the main image if it was set from grid)
+            for (const img of remainingImages) {
               if (img.file) {
                 const formData = new FormData()
                 formData.append('file', img.file)
@@ -1335,7 +1358,7 @@ export default function AdminPanel() {
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     {editingProduct 
                       ? `Imágenes adicionales (${productImages.length}/15)`
-                      : `Imágenes adicionales (${newProductImages.length}/15)`
+                      : `Imágenes del producto (${newProductImages.length}/15) - La primera será la principal`
                     }
                   </label>
                   
@@ -1367,7 +1390,7 @@ export default function AdminPanel() {
                     <>
                       <ProductImageGrid
                         images={newProductImages}
-                        mainImage={productForm.image}
+                        mainImage={productForm.image || (newProductImages.length > 0 ? newProductImages[0].url : undefined)}
                         onDelete={handleDeleteNewProductImage}
                         onReorder={handleReorderNewProductImages}
                         editable={true}
@@ -1570,23 +1593,13 @@ export default function AdminPanel() {
                     .map((product) => (
                     <tr key={product.id} className="hover:bg-gray-50">
                       <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
-                        {(() => {
-                          // Get first image from gallery (sorted by order) or fall back to main image
-                          let imageUrl = product.image
-                          if (product.images && product.images.length > 0) {
-                            const sortedImages = [...product.images].sort((a, b) => a.order - b.order)
-                            imageUrl = sortedImages[0].url
-                          }
-                          
-                          if (imageUrl) {
-                            return <img src={imageUrl} alt={product.name} className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover" />
-                          }
-                          return (
-                            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                              <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
-                            </div>
-                          )
-                        })()}
+                        {product.image ? (
+                          <img src={product.image} alt={product.name} className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover" />
+                        ) : (
+                          <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                            <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+                          </div>
+                        )}
                       </td>
                       <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
                         <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[100px] sm:max-w-[200px]">{product.name}</div>
