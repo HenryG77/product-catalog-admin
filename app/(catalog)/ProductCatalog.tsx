@@ -82,6 +82,20 @@ export default function ProductCatalog() {
   const [loading, setLoading] = useState(true)
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [showBackToTop, setShowBackToTop] = useState(false)
+
+  // Detect scroll position to show/hide back to top button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 300)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   useEffect(() => {
     fetchData()
@@ -421,16 +435,19 @@ export default function ProductCatalog() {
       {/* Footer */}
       <Footer store={store} />
 
-      {/* Floating Home Button */}
-      <a
-        href="/"
-        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 text-white p-2.5 sm:p-3 rounded-full shadow-lg transition-colors hover:scale-110 transform"
-        style={{
-          backgroundColor: store?.primaryColor || '#3b82f6'
-        }}
-      >
-        <Home className="h-5 w-5 sm:h-6 sm:w-6" />
-      </a>
+      {/* Floating Back to Top Button (Home icon) */}
+      {showBackToTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 text-white p-2.5 sm:p-3 rounded-full shadow-lg transition-all hover:scale-110 transform animate-in fade-in slide-in-from-bottom-2 duration-200"
+          style={{
+            backgroundColor: store?.primaryColor || '#3b82f6'
+          }}
+          aria-label="Volver arriba"
+        >
+          <Home className="h-5 w-5 sm:h-6 sm:w-6" />
+        </button>
+      )}
     </div>
   )
 }
