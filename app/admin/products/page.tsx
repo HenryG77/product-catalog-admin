@@ -2,6 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { Plus, Edit, Trash2, Save, X, Search, Package, Filter, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react'
+import ProductImageGrid, { MultiImageUpload } from '@/app/components/ProductImageGrid'
+
+interface ProductImage {
+  id: string
+  url: string
+  order: number
+}
 
 interface Product {
   id: string
@@ -15,6 +22,7 @@ interface Product {
   active: boolean
   currency: string
   lastUnits?: number
+  images?: ProductImage[]
 }
 
 interface Category {
@@ -51,6 +59,11 @@ export default function ProductsPage() {
     lastUnits: undefined as number | undefined
   })
 
+  // Image states
+  const [productImages, setProductImages] = useState<ProductImage[]>([])
+  const [newProductImages, setNewProductImages] = useState<{ id: string; url: string; file?: File; order: number }[]>([])
+  const [uploadingImages, setUploadingImages] = useState(false)
+
   useEffect(() => {
     fetchData()
   }, [])
@@ -82,19 +95,88 @@ export default function ProductsPage() {
     e.preventDefault()
     
     try {
+      // Handle image uploads for new products
+      let mainImage = formData.image
+      
+      if (!editingId && newProductImages.length > 0) {
+        setUploadingImages(true)
+        
+        // Upload all images
+        const uploadedUrls: string[] = []
+        for (const img of newProductImages) {
+          if (img.file) {
+            const formData = new FormData()
+            formData.append('file', img.file)
+            
+            const uploadRes = await fetch('/api/upload', {
+              method: 'POST',
+              body: formData
+            })
+            
+            if (uploadRes.ok) {
+              const data = await uploadRes.json()
+              uploadedUrls.push(data.url)
+            }
+          }
+        }
+        
+        // First image becomes main image
+        if (uploadedUrls.length > 0) {
+          mainImage = uploadedUrls[0]
+        }
+        
+        setUploadingImages(false)
+      }
+
+      const payload = { ...formData, image: mainImage }
       const url = editingId ? `/api/products/${editingId}` : '/api/products'
       const method = editingId ? 'PUT' : 'POST'
 
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       })
 
       if (res.ok) {
+        const savedProduct = await res.json()
+        
+        // Add additional images to new product
+        if (!editingId && newProductImages.length > 1) {
+          const additionalImages = newProductImages.slice(1)
+          const uploadedUrls: string[] = []
+          
+          for (const img of additionalImages) {
+            if (img.file) {
+              const formData = new FormData()
+              formData.append('file', img.file)
+              
+              const uploadRes = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+              })
+              
+              if (uploadRes.ok) {
+                const data = await uploadRes.json()
+                uploadedUrls.push(data.url)
+              }
+            }
+          }
+          
+          if (uploadedUrls.length > 0) {
+            await fetch(`/api/products/${savedProduct.id}/images`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ images: uploadedUrls })
+            })
+          }
+        }
+
         setIsCreating(false)
         setEditingId(null)
         resetForm()
+        setProductImages([])
+        setNewProductImages([])
         fetchData()
       }
     } catch (error) {
@@ -125,9 +207,11 @@ export default function ProductsPage() {
       currency: 'PYG',
       lastUnits: undefined
     })
+    setProductImages([])
+    setNewProductImages([])
   }
 
-  const startEdit = (product: Product) => {
+  const startEdit = async (product: Product) => {
     setEditingId(product.id)
     setFormData({
       name: product.name,
@@ -140,7 +224,149 @@ export default function ProductsPage() {
       currency: product.currency || 'PYG',
       lastUnits: product.lastUnits
     })
+    
+    // Load product images
+    try {
+      const res = await fetch(`/api/products/${product.id}/images`)
+      if (res.ok) {
+        const images = await res.json()
+        setProductImages(images)
+      }
+    } catch (error) {
+      console.error('Error loading product images:', error)
+    }
+    
     setIsCreating(true)
+  }
+
+  // Product Image handlers
+  const handleMultiImageUpload = async (files: File[]) => {
+    if (!editingId || files.length === 0) return
+    
+    setUploadingImages(true)
+    try {
+      const uploadedUrls: string[] = []
+      
+      for (const file of files) {
+        const formData = new FormData()
+        formData.append('file', file)
+        
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        })
+        
+        if (uploadRes.ok) {
+          const data = await uploadRes.json()
+          uploadedUrls.push(data.url)
+        }
+      }
+      
+      if (uploadedUrls.length === 0) {
+        alert('Error subiendo imágenes')
+        return
+      }
+      
+      const response = await fetch(`/api/products/${editingId}/images`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ images: uploadedUrls })
+      })
+      
+      if (response.ok) {
+        const newImages = await response.json()
+        setProductImages(prev => [...prev, ...newImages])
+      } else {
+        alert('Error agregando imágenes')
+      }
+    } catch (err) {
+      alert('Error subiendo imágenes')
+      console.error(err)
+    } finally {
+      setUploadingImages(false)
+    }
+  }
+  
+  const handleDeleteProductImage = async (imageId: string) => {
+    try {
+      const response = await fetch(`/api/products/images/${imageId}`, {
+        method: 'DELETE'
+      })
+      
+      if (response.ok) {
+        setProductImages(prev => prev.filter(img => img.id !== imageId))
+      } else {
+        console.error('Error eliminando imagen')
+      }
+    } catch (err) {
+      console.error('Error eliminando imagen:', err)
+    }
+  }
+  
+  const handleReorderProductImages = async (images: ProductImage[]) => {
+    setProductImages(images)
+    
+    try {
+      await Promise.all(
+        images.map((img, index) =>
+          fetch(`/api/products/images/${img.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order: index })
+          })
+        )
+      )
+    } catch (err) {
+      console.error('Error reordering images:', err)
+    }
+  }
+
+  // Create mode image handlers (local only, no API calls)
+  const handleNewProductImageUpload = async (files: File[]) => {
+    if (files.length === 0) return
+    
+    const currentCount = newProductImages.length
+    if (currentCount + files.length > 15) {
+      alert(`Máximo 15 imágenes. Actualmente tienes ${currentCount}.`)
+      return
+    }
+
+    setUploadingImages(true)
+    try {
+      const newImages: { id: string; url: string; file?: File; order: number }[] = []
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const previewUrl = URL.createObjectURL(file)
+        newImages.push({
+          id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          url: previewUrl,
+          file: file,
+          order: i
+        })
+      }
+      
+      setNewProductImages(prev => [...prev, ...newImages])
+    } catch (err) {
+      alert('Error agregando imágenes')
+      console.error(err)
+    } finally {
+      setUploadingImages(false)
+    }
+  }
+
+  const handleDeleteNewProductImage = (imageId: string) => {
+    setNewProductImages(prev => {
+      const imageToDelete = prev.find(img => img.id === imageId)
+      if (imageToDelete?.url.startsWith('blob:')) {
+        URL.revokeObjectURL(imageToDelete.url)
+      }
+      return prev.filter(img => img.id !== imageId)
+    })
+  }
+
+  const handleReorderNewProductImages = (images: { id: string; url: string; file?: File; order: number }[]) => {
+    setNewProductImages(images)
   }
 
   // Filter and paginate
@@ -288,14 +514,61 @@ export default function ProductsPage() {
             </div>
 
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">URL de imagen</label>
-              <input
-                type="url"
-                value={formData.image}
-                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="https://ejemplo.com/imagen.jpg"
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-2">Imágenes</label>
+              
+              {/* Edit Mode - Show existing images */}
+              {editingId && (
+                <>
+                  <ProductImageGrid
+                    images={productImages}
+                    mainImage={formData.image}
+                    onDelete={handleDeleteProductImage}
+                    onReorder={handleReorderProductImages}
+                    editable={true}
+                    maxImages={15}
+                  />
+                  
+                  {productImages.length < 15 && (
+                    <div className="mt-4">
+                      <MultiImageUpload
+                        onUpload={handleMultiImageUpload}
+                        disabled={uploadingImages || productImages.length >= 15}
+                        maxFiles={15}
+                        remainingSlots={15 - productImages.length}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+              
+              {/* Create Mode - Show upload area */}
+              {!editingId && (
+                <>
+                  <ProductImageGrid
+                    images={newProductImages}
+                    mainImage={newProductImages.length > 0 ? newProductImages[0].url : formData.image}
+                    onDelete={handleDeleteNewProductImage}
+                    onReorder={handleReorderNewProductImages}
+                    editable={true}
+                    maxImages={15}
+                  />
+                  
+                  {newProductImages.length < 15 && (
+                    <div className="mt-4">
+                      <MultiImageUpload
+                        onUpload={handleNewProductImageUpload}
+                        disabled={uploadingImages || newProductImages.length >= 15}
+                        maxFiles={15}
+                        remainingSlots={15 - newProductImages.length}
+                      />
+                    </div>
+                  )}
+                  
+                  <p className="text-xs text-gray-500 mt-2">
+                    La primera imagen se usará como imagen principal del producto
+                  </p>
+                </>
+              )}
             </div>
 
             <label className="flex items-center gap-2 cursor-pointer col-span-2">
@@ -321,6 +594,8 @@ export default function ProductsPage() {
                 onClick={() => {
                   setIsCreating(false)
                   setEditingId(null)
+                  setProductImages([])
+                  setNewProductImages([])
                 }}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
               >
