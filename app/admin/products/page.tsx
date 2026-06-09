@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Plus, Edit, Trash2, Save, X, Search, Package, Filter, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react'
 import ProductImageGrid, { MultiImageUpload } from '@/app/components/ProductImageGrid'
 
@@ -63,6 +63,9 @@ export default function ProductsPage() {
   const [productImages, setProductImages] = useState<ProductImage[]>([])
   const [newProductImages, setNewProductImages] = useState<{ id: string; url: string; file?: File; order: number }[]>([])
   const [uploadingImages, setUploadingImages] = useState(false)
+
+  // Ref for name input focus
+  const nameInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetchData()
@@ -407,6 +410,14 @@ export default function ProductsPage() {
     return `${price}`
   }
 
+  const formatPriceInput = (value: string) => {
+    // Remove all non-digit characters
+    const digits = value.replace(/[^\d]/g, '')
+    if (digits === '') return ''
+    // Add thousand separators with dots
+    return parseInt(digits).toLocaleString('es-PY')
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -428,6 +439,7 @@ export default function ProductsPage() {
             setIsCreating(true)
             setEditingId(null)
             resetForm()
+            setTimeout(() => nameInputRef.current?.focus(), 100)
           }}
           disabled={isCreating}
           className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
@@ -437,56 +449,69 @@ export default function ProductsPage() {
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 bg-white p-4 rounded-xl border border-gray-100">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar productos..."
-            className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-          />
-        </div>
-        
-        <select
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-        >
-          <option value="">Todas las categorías</option>
-          {categories.map(cat => (
-            <option key={cat.id} value={cat.id}>{cat.name}</option>
-          ))}
-        </select>
+      {/* Filters - Show when NOT creating */}
+      {!isCreating && (
+        <div className="flex flex-wrap gap-3 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar productos..."
+              className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900"
+            />
+          </div>
+          
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900"
+          >
+            <option value="">Todas las categorías</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
 
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as any)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-        >
-          <option value="all">Todos los estados</option>
-          <option value="active">Activos</option>
-          <option value="inactive">Inactivos</option>
-        </select>
-      </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900"
+          >
+            <option value="all">Todos los estados</option>
+            <option value="active">Activos</option>
+            <option value="inactive">Inactivos</option>
+          </select>
+        </div>
+      )}
 
       {/* Create/Edit Form - Simplified inline */}
       {isCreating && (
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">
-            {editingId ? 'Editar producto' : 'Nuevo producto'}
-          </h2>
+        <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+              <Package className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {editingId ? 'Editar producto' : 'Nuevo producto'}
+              </h2>
+              <p className="text-sm text-gray-500">
+                {editingId ? 'Modifica los datos del producto' : 'Completa los datos para crear un nuevo producto'}
+              </p>
+            </div>
+          </div>
           
-          <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-5">
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
               <input
+                ref={nameInputRef}
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 transition-all"
                 placeholder="Nombre del producto"
                 required
               />
@@ -497,21 +522,25 @@ export default function ProductsPage() {
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                rows={3}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-gray-900 transition-all"
                 placeholder="Descripción del producto"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Precio</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Precio (Gs.)</label>
               <input
-                type="number"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                min="0"
-                step="0.01"
+                type="text"
+                value={formData.price === 0 ? '' : formatPriceInput(formData.price.toString())}
+                onChange={(e) => {
+                  const formatted = formatPriceInput(e.target.value)
+                  const digits = e.target.value.replace(/[^\d]/g, '')
+                  setFormData({ ...formData, price: digits === '' ? 0 : parseInt(digits) })
+                }}
+                onFocus={(e) => e.target.select()}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 transition-all"
+                placeholder="0"
                 required
               />
             </div>
@@ -521,7 +550,7 @@ export default function ProductsPage() {
               <select
                 value={formData.categoryId}
                 onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 transition-all"
               >
                 <option value="">Seleccionar...</option>
                 {categories.map(cat => (
@@ -531,7 +560,10 @@ export default function ProductsPage() {
             </div>
 
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Imágenes</label>
+              <div className="flex items-center gap-2 mb-2">
+                <ImageIcon className="w-4 h-4 text-gray-500" />
+                <label className="block text-sm font-medium text-gray-700">Imágenes</label>
+              </div>
               
               {/* Edit Mode - Show existing images */}
               {editingId && (
@@ -588,20 +620,25 @@ export default function ProductsPage() {
               )}
             </div>
 
-            <label className="flex items-center gap-2 cursor-pointer col-span-2">
-              <input
-                type="checkbox"
-                checked={formData.active}
-                onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700">Producto activo</span>
-            </label>
+            <div className="col-span-2">
+              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={formData.active}
+                  onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                  className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900">Producto activo</span>
+                  <p className="text-xs text-gray-500">El producto será visible en el catálogo</p>
+                </div>
+              </label>
+            </div>
 
-            <div className="col-span-2 flex gap-3 pt-2">
+            <div className="col-span-2 flex gap-3 pt-4">
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-sm hover:shadow"
               >
                 <Save className="w-4 h-4" />
                 {editingId ? 'Guardar cambios' : 'Crear producto'}
@@ -614,7 +651,7 @@ export default function ProductsPage() {
                   setProductImages([])
                   setNewProductImages([])
                 }}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors shadow-sm"
               >
                 <X className="w-4 h-4" />
                 Cancelar
@@ -624,8 +661,45 @@ export default function ProductsPage() {
         </div>
       )}
 
+      {/* Filters - Show when creating, after form */}
+      {isCreating && (
+        <div className="flex flex-wrap gap-3 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar productos..."
+              className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900"
+            />
+          </div>
+          
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900"
+          >
+            <option value="">Todas las categorías</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900"
+          >
+            <option value="all">Todos los estados</option>
+            <option value="active">Activos</option>
+            <option value="inactive">Inactivos</option>
+          </select>
+        </div>
+      )}
+
       {/* Products Table */}
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-100">
             <tr>

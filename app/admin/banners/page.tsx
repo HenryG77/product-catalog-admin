@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Plus, Edit, Trash2, Save, X, Image as ImageIcon, Eye, EyeOff, GripVertical } from 'lucide-react'
 
 interface Banner {
@@ -38,6 +38,10 @@ export default function BannersPage() {
   })
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+
+  // Ref for form scroll
+  const formRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchData()
@@ -159,7 +163,9 @@ export default function BannersPage() {
       })
 
       if (res.ok) {
-        fetchData()
+        setBanners(banners.map(b => 
+          b.id === banner.id ? { ...b, isActive: !banner.isActive } : b
+        ))
       }
     } catch (error) {
       console.error('Error toggling banner:', error)
@@ -179,6 +185,7 @@ export default function BannersPage() {
     })
     setImageFile(null)
     setIsCreating(true)
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
   }
 
   const startCreate = () => {
@@ -194,6 +201,7 @@ export default function BannersPage() {
       isActive: true
     })
     setImageFile(null)
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
   }
 
   const cancelForm = () => {
@@ -207,6 +215,47 @@ export default function BannersPage() {
     if (file) {
       setImageFile(file)
       setFormData({ ...formData, image: URL.createObjectURL(file) })
+    }
+  }
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+  }
+
+  const handleDrop = async (dropIndex: number) => {
+    if (draggedIndex === null || draggedIndex === dropIndex) return
+
+    const newBanners = [...banners]
+    const [draggedBanner] = newBanners.splice(draggedIndex, 1)
+    newBanners.splice(dropIndex, 0, draggedBanner)
+
+    // Update order for all banners
+    const updatedBanners = newBanners.map((banner, index) => ({
+      ...banner,
+      order: index
+    }))
+
+    setBanners(updatedBanners)
+    setDraggedIndex(null)
+
+    // Save new order to backend
+    try {
+      await Promise.all(
+        updatedBanners.map(banner =>
+          fetch(`/api/banners/${banner.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order: banner.order })
+          })
+        )
+      )
+    } catch (error) {
+      console.error('Error reordering banners:', error)
+      fetchData()
     }
   }
 
@@ -229,7 +278,7 @@ export default function BannersPage() {
         <button
           onClick={startCreate}
           disabled={isCreating}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm hover:shadow"
         >
           <Plus className="w-4 h-4" />
           Nuevo banner
@@ -238,12 +287,22 @@ export default function BannersPage() {
 
       {/* Create/Edit Form */}
       {isCreating && (
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">
-            {editingId ? 'Editar banner' : 'Nuevo banner'}
-          </h2>
+        <div ref={formRef} className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+              <ImageIcon className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {editingId ? 'Editar banner' : 'Nuevo banner'}
+              </h2>
+              <p className="text-sm text-gray-500">
+                {editingId ? 'Modifica los datos del banner' : 'Completa los datos para crear un nuevo banner'}
+              </p>
+            </div>
+          </div>
           
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Imagen</label>
               <div className="flex items-center gap-4">
@@ -251,7 +310,7 @@ export default function BannersPage() {
                   <img 
                     src={formData.image} 
                     alt="Preview" 
-                    className="h-20 w-auto object-contain rounded-lg border border-gray-200"
+                    className="h-24 w-auto object-contain rounded-lg border border-gray-200"
                   />
                 )}
                 <div className="flex-1">
@@ -268,14 +327,14 @@ export default function BannersPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Título</label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 transition-all"
                   placeholder="Título del banner"
                 />
               </div>
@@ -285,7 +344,7 @@ export default function BannersPage() {
                 <select
                   value={formData.categoryId}
                   onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 transition-all"
                 >
                   <option value="">Sin categoría</option>
                   {categories.map((cat) => (
@@ -300,20 +359,20 @@ export default function BannersPage() {
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-none"
+                rows={3}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-gray-900 transition-all"
                 placeholder="Descripción opcional"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Link</label>
                 <input
                   type="url"
                   value={formData.link}
                   onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 transition-all"
                   placeholder="https://ejemplo.com"
                 />
               </div>
@@ -324,27 +383,32 @@ export default function BannersPage() {
                   type="text"
                   value={formData.whatsappMessage}
                   onChange={(e) => setFormData({ ...formData, whatsappMessage: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 transition-all"
                   placeholder="Hola, vi el banner de..."
                 />
               </div>
             </div>
 
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700">Banner activo</span>
-            </label>
+            <div>
+              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                  className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900">Banner activo</span>
+                  <p className="text-xs text-gray-500">El banner será visible en la tienda</p>
+                </div>
+              </label>
+            </div>
 
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-3 pt-4">
               <button
                 type="submit"
                 disabled={uploading}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm hover:shadow"
               >
                 <Save className="w-4 h-4" />
                 {uploading ? 'Guardando...' : (editingId ? 'Guardar cambios' : 'Crear banner')}
@@ -352,7 +416,7 @@ export default function BannersPage() {
               <button
                 type="button"
                 onClick={cancelForm}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors shadow-sm"
               >
                 <X className="w-4 h-4" />
                 Cancelar
@@ -367,9 +431,13 @@ export default function BannersPage() {
         {banners.map((banner, index) => (
           <div 
             key={banner.id} 
-            className={`bg-white rounded-xl border overflow-hidden transition-all hover:shadow-md ${
-              banner.isActive ? 'border-gray-200' : 'border-gray-200 opacity-60'
-            }`}
+            draggable
+            onDragStart={() => handleDragStart(index)}
+            onDragOver={handleDragOver}
+            onDrop={() => handleDrop(index)}
+            className={`bg-white rounded-xl border overflow-hidden transition-all hover:shadow-md cursor-move ${
+              banner.isActive ? 'border-gray-200 shadow-sm' : 'border-gray-200 opacity-60'
+            } ${draggedIndex === index ? 'opacity-50 scale-95' : ''}`}
           >
             <div className="aspect-video relative bg-gray-100">
               <img 
@@ -390,7 +458,8 @@ export default function BannersPage() {
                   {banner.isActive ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
               </div>
-              <div className="absolute top-2 left-2">
+              <div className="absolute top-2 left-2 flex items-center gap-2">
+                <GripVertical className="w-4 h-4 text-white/70" />
                 <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-full">
                   #{index + 1}
                 </span>
@@ -432,7 +501,7 @@ export default function BannersPage() {
         ))}
         
         {banners.length === 0 && (
-          <div className="col-span-full py-12 text-center text-gray-500 bg-white rounded-xl border border-gray-100 border-dashed">
+          <div className="col-span-full py-12 text-center text-gray-500 bg-white rounded-xl border border-gray-100 border-dashed shadow-sm">
             <ImageIcon className="w-12 h-12 mx-auto mb-3 text-gray-300" />
             <p>No hay banners. Crea el primero.</p>
           </div>
