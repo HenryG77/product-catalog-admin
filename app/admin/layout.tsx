@@ -16,6 +16,7 @@ export default function AdminLayout({
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -23,7 +24,7 @@ export default function AdminLayout({
         const response = await fetch('/api/auth/verify', {
           credentials: 'include'
         })
-        
+
         if (response.ok) {
           const data = await response.json()
           setUser(data.user)
@@ -64,12 +65,16 @@ export default function AdminLayout({
 
   return (
     <div className={`min-h-screen bg-gray-50 ${inter.className}`}>
-      <AdminSidebar />
-      
-      <div className="ml-64 min-h-screen flex flex-col">
-        <AdminHeader user={user} onLogout={handleLogout} />
-        
-        <main className="flex-1 p-8">
+      <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      <div className="lg:ml-64 min-h-screen flex flex-col">
+        <AdminHeader
+          user={user}
+          onLogout={handleLogout}
+          onMenuClick={() => setSidebarOpen(true)}
+        />
+
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
           {children}
         </main>
       </div>
