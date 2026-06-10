@@ -48,18 +48,22 @@ export default function GeneralSettingsPage() {
         if (res.ok) {
           const data = await res.json()
 
-          // Parse whatsapp number
+          // Parse whatsapp number - remove all non-numeric characters first
           let parsedCode = '+595'
           let parsedNumber = ''
 
           if (data.whatsapp) {
+            // Clean the number - remove all non-numeric characters except +
+            const cleanNumber = data.whatsapp.replace(/[^\d+]/g, '')
+
             // Find matching country code
-            const matchedCode = countryCodes.find(c => data.whatsapp.startsWith(c.code))
+            const matchedCode = countryCodes.find(c => cleanNumber.startsWith(c.code))
             if (matchedCode) {
               parsedCode = matchedCode.code
-              parsedNumber = data.whatsapp.substring(matchedCode.code.length).trim()
+              parsedNumber = cleanNumber.substring(matchedCode.code.length)
             } else {
-              parsedNumber = data.whatsapp
+              // If no match, assume it's just the number without country code
+              parsedNumber = cleanNumber.replace(/\+/g, '')
             }
           }
 
@@ -88,8 +92,9 @@ export default function GeneralSettingsPage() {
     setSaving(true)
     setMessage('')
 
-    // Combine country code and phone number
-    const fullWhatsapp = phoneNumber ? `${countryCode} ${phoneNumber}` : ''
+    // Combine country code and phone number without spaces
+    const cleanPhoneNumber = phoneNumber.replace(/\s/g, '')
+    const fullWhatsapp = cleanPhoneNumber ? `${countryCode}${cleanPhoneNumber}` : ''
 
     try {
       const res = await fetch('/api/store', {
@@ -199,7 +204,7 @@ export default function GeneralSettingsPage() {
               <input
                 type="text"
                 id="name"
-                value={store.name}
+                value={store.name || ''}
                 onChange={(e) => setStore({ ...store, name: e.target.value })}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-900 hover:border-gray-400"
                 placeholder="Ej: Mi Negocio Online"
@@ -215,7 +220,7 @@ export default function GeneralSettingsPage() {
               </label>
               <textarea
                 id="description"
-                value={store.description}
+                value={store.description || ''}
                 onChange={(e) => setStore({ ...store, description: e.target.value })}
                 rows={4}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-none text-gray-900 hover:border-gray-400"
