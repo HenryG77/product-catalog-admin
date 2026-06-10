@@ -108,7 +108,7 @@ export default function ProductDetailPage() {
     const fullMessage = baseMessage + orderDetails
 
     const message = encodeURIComponent(fullMessage)
-    const whatsappUrl = `https://wa.me/${product.store.whatsapp}?text=${message}`
+    const whatsappUrl = `https://wa.me/${product.store.whatsapp.replace(/\D/g, '')}?text=${message}`
     window.open(whatsappUrl, '_blank')
   }
 
@@ -371,16 +371,18 @@ export default function ProductDetailPage() {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-10 h-10 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white transition-all hover:opacity-90"
+                    style={{ backgroundColor: primaryColor }}
                   >
                     -
                   </button>
-                  <span className="w-12 text-center font-semibold text-lg">
+                  <span className="w-12 text-center font-semibold text-lg" style={{ color: primaryColor }}>
                     {quantity}
                   </span>
                   <button
                     onClick={() => setQuantity(quantity + 1)}
-                    className="w-10 h-10 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white transition-all hover:opacity-90"
+                    style={{ backgroundColor: primaryColor }}
                   >
                     +
                   </button>
@@ -476,7 +478,8 @@ export default function ProductDetailPage() {
                 </div>
                 <button
                   onClick={() => router.push('/')}
-                  className="px-4 py-2 text-sm font-medium rounded-lg bg-white hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 text-sm font-medium rounded-lg text-white transition-all hover:opacity-90"
+                  style={{ backgroundColor: primaryColor }}
                 >
                   Ver tienda
                 </button>

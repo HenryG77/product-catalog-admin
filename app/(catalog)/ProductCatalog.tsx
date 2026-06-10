@@ -257,7 +257,7 @@ export default function ProductCatalog() {
           {/* Sidebar Categories - Desktop */}
           <aside className="hidden lg:block lg:w-64 xl:w-72 flex-shrink-0">
             <div className="bg-white rounded-lg shadow-md p-4 xl:p-6 sticky top-24">
-              <h2 className="text-base xl:text-lg font-semibold mb-4 flex items-center">
+              <h2 className="text-base xl:text-lg font-semibold mb-4 flex items-center" style={{ color: store?.primaryColor || '#3b82f6' }}>
                 <Package className="h-5 w-5 mr-2" />
                 Categorías
               </h2>

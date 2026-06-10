@@ -1,7 +1,6 @@
 'use client'
 
 import { LogOut, User, Bell } from 'lucide-react'
-import Link from 'next/link'
 
 interface AdminHeaderProps {
   user: any
@@ -18,12 +17,14 @@ export function AdminHeader({ user, onLogout }: AdminHeaderProps) {
 
       {/* Right side - User menu */}
       <div className="flex items-center gap-4">
-        <Link
+        <a
           href="/"
+          target="_blank"
+          rel="noopener noreferrer"
           className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
         >
           Ver tienda
-        </Link>
+        </a>
 
         <div className="h-4 w-px bg-gray-200"></div>
 

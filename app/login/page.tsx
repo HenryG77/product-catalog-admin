@@ -79,7 +79,7 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-9 sm:pl-10 pr-3 py-2 sm:py-2.5 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
+                  className="block w-full pl-9 sm:pl-10 pr-3 py-2 sm:py-2.5 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base text-gray-900"
                   placeholder="admin@tienda.com"
                 />
               </div>
@@ -102,7 +102,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-9 sm:pl-10 pr-9 sm:pr-10 py-2 sm:py-2.5 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
+                  className="block w-full pl-9 sm:pl-10 pr-9 sm:pr-10 py-2 sm:py-2.5 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base text-gray-900"
                   placeholder="•••••••••"
                 />
                 <button
@@ -167,8 +167,8 @@ export default function LoginPage() {
             <div className="text-xs sm:text-sm text-gray-600">
               <p className="font-medium mb-1 sm:mb-2">Credenciales de Demo:</p>
               <div className="bg-gray-50 rounded p-2 sm:p-3 text-xs sm:text-sm">
-                <p><strong>Email:</strong> admin@tienda.com</p>
-                <p><strong>Contraseña:</strong> admin123</p>
+                <p><strong>Email:</strong> <span className="text-gray-700">admin@tienda.com</span></p>
+                <p><strong>Contraseña:</strong> <span className="text-gray-700">admin123</span></p>
               </div>
             </div>
           </div>
