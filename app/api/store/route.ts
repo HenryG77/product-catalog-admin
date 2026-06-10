@@ -51,15 +51,46 @@ export async function PUT(request: NextRequest) {
     const existingStore = await prisma.store.findFirst()
 
     if (existingStore) {
-      // Update existing store
+      // Build update data object with only the fields that are present in the request
+      const updateData: any = {}
+
+      // General fields
+      if (body.name !== undefined) updateData.name = body.name
+      if (body.description !== undefined) updateData.description = body.description
+      if (body.whatsapp !== undefined) updateData.whatsapp = body.whatsapp
+      if (body.logo !== undefined) updateData.logo = body.logo
+      if (body.email !== undefined) updateData.email = body.email
+      if (body.address !== undefined) updateData.address = body.address
+
+      // Appearance fields
+      if (body.primaryColor !== undefined) updateData.primaryColor = body.primaryColor
+      if (body.secondaryColor !== undefined) updateData.secondaryColor = body.secondaryColor
+
+      // Social media fields
+      if (body.showFacebook !== undefined) updateData.showFacebook = body.showFacebook
+      if (body.facebookUrl !== undefined) updateData.facebookUrl = body.facebookUrl
+      if (body.showInstagram !== undefined) updateData.showInstagram = body.showInstagram
+      if (body.instagramUrl !== undefined) updateData.instagramUrl = body.instagramUrl
+      if (body.showTiktok !== undefined) updateData.showTiktok = body.showTiktok
+      if (body.tiktokUrl !== undefined) updateData.tiktokUrl = body.tiktokUrl
+
+      // Contact fields
+      if (body.showAddress !== undefined) updateData.showAddress = body.showAddress
+      if (body.addressText !== undefined) updateData.addressText = body.addressText
+      if (body.showPhone !== undefined) updateData.showPhone = body.showPhone
+      if (body.phoneText !== undefined) updateData.phoneText = body.phoneText
+      if (body.showEmail !== undefined) updateData.showEmail = body.showEmail
+      if (body.emailText !== undefined) updateData.emailText = body.emailText
+      if (body.showHours !== undefined) updateData.showHours = body.showHours
+      if (body.hoursText !== undefined) updateData.hoursText = body.hoursText
+
+      // Footer fields
+      if (body.footerCopyright !== undefined) updateData.footerCopyright = body.footerCopyright
+
+      // Update existing store with all provided fields
       const store = await prisma.store.update({
         where: { id: existingStore.id },
-        data: {
-          name: body.name,
-          description: body.description,
-          whatsapp: body.whatsapp,
-          logo: body.logo
-        }
+        data: updateData
       })
       return NextResponse.json(store)
     } else {
@@ -70,8 +101,8 @@ export async function PUT(request: NextRequest) {
           description: body.description || '',
           whatsapp: body.whatsapp || '',
           logo: body.logo || '',
-          primaryColor: '#3b82f6',
-          secondaryColor: '#1e40af'
+          primaryColor: body.primaryColor || '#3b82f6',
+          secondaryColor: body.secondaryColor || '#1e40af'
         }
       })
       return NextResponse.json(store)
