@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Plus, Edit, Trash2, Save, X, Search, Package, Filter, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react'
+import { Plus, Edit, Trash2, Save, X, Search, Package, Filter, ChevronLeft, ChevronRight, Image as ImageIcon, Tag } from 'lucide-react'
 import ProductImageGrid, { MultiImageUpload } from '@/app/components/ProductImageGrid'
 
 interface ProductImage {
@@ -429,10 +429,15 @@ export default function ProductsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Productos</h1>
-          <p className="text-gray-500 mt-1">{filteredProducts.length} productos en total</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text">Productos</h1>
+          <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
+              <Package className="w-4 h-4" />
+              <span>{filteredProducts.length} productos</span>
+            </div>
+          </div>
         </div>
         <button
           onClick={() => {
@@ -442,7 +447,7 @@ export default function ProductsPage() {
             setTimeout(() => nameInputRef.current?.focus(), 100)
           }}
           disabled={isCreating}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 transition-all shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 active:scale-95"
         >
           <Plus className="w-4 h-4" />
           Nuevo producto
@@ -451,118 +456,164 @@ export default function ProductsPage() {
 
       {/* Filters - Show when NOT creating */}
       {!isCreating && (
-        <div className="flex flex-wrap gap-3 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar productos..."
-              className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900"
-            />
-          </div>
-          
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900"
-          >
-            <option value="">Todas las categorías</option>
-            {categories.map(cat => (
-              <option key={cat.id} value={cat.id}>{cat.name}</option>
-            ))}
-          </select>
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900"
-          >
-            <option value="all">Todos los estados</option>
-            <option value="active">Activos</option>
-            <option value="inactive">Inactivos</option>
-          </select>
-        </div>
-      )}
-
-      {/* Create/Edit Form - Simplified inline */}
-      {isCreating && (
-        <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-              <Package className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                {editingId ? 'Editar producto' : 'Nuevo producto'}
-              </h2>
-              <p className="text-sm text-gray-500">
-                {editingId ? 'Modifica los datos del producto' : 'Completa los datos para crear un nuevo producto'}
-              </p>
-            </div>
-          </div>
-          
-          <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-5">
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
-              <input
-                ref={nameInputRef}
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 transition-all"
-                placeholder="Nombre del producto"
-                required
-              />
-            </div>
-
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-gray-900 transition-all"
-                placeholder="Descripción del producto"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Precio (Gs.)</label>
+        <div className="bg-gradient-to-br from-white to-gray-50 p-5 rounded-2xl border border-gray-200 shadow-lg">
+          <div className="flex flex-wrap gap-3">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                value={formData.price === 0 ? '' : formatPriceInput(formData.price.toString())}
-                onChange={(e) => {
-                  const formatted = formatPriceInput(e.target.value)
-                  const digits = e.target.value.replace(/[^\d]/g, '')
-                  setFormData({ ...formData, price: digits === '' ? 0 : parseInt(digits) })
-                }}
-                onFocus={(e) => e.target.select()}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 transition-all"
-                placeholder="0"
-                required
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar productos..."
+                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 bg-white transition-all hover:border-gray-300"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               <select
-                value={formData.categoryId}
-                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 transition-all"
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="pl-10 pr-8 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 bg-white transition-all hover:border-gray-300 appearance-none cursor-pointer min-w-[180px]"
               >
-                <option value="">Seleccionar...</option>
+                <option value="">Todas las categorías</option>
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
               </select>
             </div>
 
-            <div className="col-span-2">
-              <div className="flex items-center gap-2 mb-2">
-                <ImageIcon className="w-4 h-4 text-gray-500" />
-                <label className="block text-sm font-medium text-gray-700">Imágenes</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 bg-white transition-all hover:border-gray-300 cursor-pointer min-w-[160px]"
+            >
+              <option value="all">Todos los estados</option>
+              <option value="active">Activos</option>
+              <option value="inactive">Inactivos</option>
+            </select>
+          </div>
+        </div>
+      )}
+
+      {/* Create/Edit Form - Simplified inline */}
+      {isCreating && (
+        <div className="bg-gradient-to-br from-white via-white to-blue-50/30 rounded-2xl border-2 border-blue-100 p-6 shadow-xl">
+          <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-200">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <Package className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                {editingId ? 'Editar producto' : 'Nuevo producto'}
+              </h2>
+              <p className="text-sm text-gray-600 mt-0.5">
+                {editingId ? 'Modifica los datos del producto' : 'Completa los datos para crear un nuevo producto'}
+              </p>
+            </div>
+          </div>
+          
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Nombre del producto */}
+            <div className="col-span-full group">
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                  <Package className="w-3.5 h-3.5 text-blue-600" />
+                </div>
+                Nombre del producto
+              </label>
+              <input
+                ref={nameInputRef}
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-5 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 transition-all hover:border-gray-300 placeholder:text-gray-400 bg-white shadow-sm"
+                placeholder="Ej: Notebook HP Pavilion 15"
+                required
+              />
+            </div>
+
+            {/* Descripción */}
+            <div className="col-span-full group">
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                <div className="w-6 h-6 rounded-lg bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                  <svg className="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                  </svg>
+                </div>
+                Descripción
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={4}
+                className="w-full px-5 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-gray-900 transition-all hover:border-gray-300 placeholder:text-gray-400 bg-white shadow-sm"
+                placeholder="Describe las características principales del producto..."
+              />
+              <p className="text-xs text-gray-500 mt-2 ml-1">Información que verán tus clientes</p>
+            </div>
+
+            {/* Precio */}
+            <div className="group">
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                <div className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                  <svg className="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                Precio (Gs.)
+              </label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">Gs.</div>
+                <input
+                  type="text"
+                  value={formData.price === 0 ? '' : formatPriceInput(formData.price.toString())}
+                  onChange={(e) => {
+                    const formatted = formatPriceInput(e.target.value)
+                    const digits = e.target.value.replace(/[^\d]/g, '')
+                    setFormData({ ...formData, price: digits === '' ? 0 : parseInt(digits) })
+                  }}
+                  onFocus={(e) => e.target.select()}
+                  className="w-full pl-14 pr-5 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 transition-all hover:border-gray-300 placeholder:text-gray-400 bg-white shadow-sm font-medium"
+                  placeholder="0"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Categoría */}
+            <div className="group">
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                <div className="w-6 h-6 rounded-lg bg-orange-100 flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+                  <Tag className="w-3.5 h-3.5 text-orange-600" />
+                </div>
+                Categoría
+              </label>
+              <select
+                value={formData.categoryId}
+                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                className="w-full px-5 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 transition-all hover:border-gray-300 bg-white shadow-sm cursor-pointer appearance-none"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                  backgroundPosition: 'right 0.75rem center',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundSize: '1.5em 1.5em',
+                  paddingRight: '2.5rem'
+                }}
+              >
+                <option value="">Seleccionar categoría...</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="col-span-full">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-6 h-6 rounded-lg bg-pink-100 flex items-center justify-center">
+                  <ImageIcon className="w-3.5 h-3.5 text-pink-600" />
+                </div>
+                <label className="block text-sm font-semibold text-gray-700">Imágenes del producto</label>
               </div>
               
               {/* Edit Mode - Show existing images */}
@@ -620,27 +671,35 @@ export default function ProductsPage() {
               )}
             </div>
 
-            <div className="col-span-2">
-              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+            <div className="col-span-full">
+              <label className="flex items-center gap-4 cursor-pointer p-5 rounded-xl border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50/30 transition-all group">
                 <input
                   type="checkbox"
                   checked={formData.active}
                   onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                  className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="w-6 h-6 rounded-lg border-2 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
                 />
-                <div>
-                  <span className="text-sm font-medium text-gray-900">Producto activo</span>
-                  <p className="text-xs text-gray-500">El producto será visible en el catálogo</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center group-hover:from-blue-200 group-hover:to-blue-300 transition-all">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span className="text-sm font-semibold text-gray-900 block">Producto activo y visible</span>
+                    <p className="text-xs text-gray-500">El producto aparecerá en el catálogo público</p>
+                  </div>
                 </div>
               </label>
             </div>
 
-            <div className="col-span-2 flex gap-3 pt-4">
+            <div className="col-span-full flex gap-3 pt-6 border-t border-gray-200">
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-sm hover:shadow"
+                className="inline-flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 active:scale-95"
               >
-                <Save className="w-4 h-4" />
+                <Save className="w-5 h-5" />
                 {editingId ? 'Guardar cambios' : 'Crear producto'}
               </button>
               <button
@@ -651,9 +710,9 @@ export default function ProductsPage() {
                   setProductImages([])
                   setNewProductImages([])
                 }}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors shadow-sm"
+                className="inline-flex items-center gap-2 px-6 py-3.5 bg-white border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm active:scale-95"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
                 Cancelar
               </button>
             </div>
@@ -663,99 +722,110 @@ export default function ProductsPage() {
 
       {/* Filters - Show when creating, after form */}
       {isCreating && (
-        <div className="flex flex-wrap gap-3 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar productos..."
-              className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900"
-            />
-          </div>
-          
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900"
-          >
-            <option value="">Todas las categorías</option>
-            {categories.map(cat => (
-              <option key={cat.id} value={cat.id}>{cat.name}</option>
-            ))}
-          </select>
+        <div className="bg-gradient-to-br from-white to-gray-50 p-5 rounded-2xl border border-gray-200 shadow-lg">
+          <div className="flex flex-wrap gap-3">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar productos..."
+                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 bg-white transition-all hover:border-gray-300"
+              />
+            </div>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900"
-          >
-            <option value="all">Todos los estados</option>
-            <option value="active">Activos</option>
-            <option value="inactive">Inactivos</option>
-          </select>
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="pl-10 pr-8 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 bg-white transition-all hover:border-gray-300 appearance-none cursor-pointer min-w-[180px]"
+              >
+                <option value="">Todas las categorías</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 bg-white transition-all hover:border-gray-300 cursor-pointer min-w-[160px]"
+            >
+              <option value="all">Todos los estados</option>
+              <option value="active">Activos</option>
+              <option value="inactive">Inactivos</option>
+            </select>
+          </div>
         </div>
       )}
 
       {/* Products Table */}
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+      <div className="bg-white rounded-2xl border-2 border-gray-200 overflow-hidden shadow-xl">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-100">
+          <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Categoría</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Precio</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Producto</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Categoría</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Precio</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Estado</th>
+              <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {paginatedProducts.map((product) => (
-              <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+              <tr key={product.id} className="hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-transparent transition-all duration-200 group">
                 <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden ring-2 ring-gray-200 group-hover:ring-blue-300 transition-all shadow-sm">
                       {product.image ? (
                         <img src={product.image} alt="" className="w-full h-full object-cover" />
                       ) : (
-                        <Package className="w-5 h-5 text-gray-400" />
+                        <Package className="w-6 h-6 text-gray-400" />
                       )}
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{product.name}</p>
+                      <p className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{product.name}</p>
                       <p className="text-sm text-gray-500 line-clamp-1">{product.description || 'Sin descripción'}</p>
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-600">
-                  {product.category?.name || 'Sin categoría'}
-                </td>
-                <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                  {formatPrice(product.price, product.currency || 'PYG')}
+                <td className="px-6 py-4">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                    {product.category?.name || 'Sin categoría'}
+                  </span>
                 </td>
                 <td className="px-6 py-4">
-                  <label className="relative inline-flex items-center cursor-pointer">
+                  <span className="text-base font-bold text-gray-900 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                    {formatPrice(product.price, product.currency || 'PYG')}
+                  </span>
+                </td>
+                <td className="px-6 py-4">
+                  <label className="relative inline-flex items-center cursor-pointer group/toggle">
                     <input
                       type="checkbox"
                       checked={product.active}
                       onChange={() => handleToggleActive(product.id, product.active)}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                    <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-green-500 peer-checked:to-emerald-500 shadow-sm"></div>
                   </label>
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-2">
                     <button
                       onClick={() => startEdit(product)}
-                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      className="p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all hover:shadow-md active:scale-95"
+                      title="Editar producto"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(product.id)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all hover:shadow-md active:scale-95"
+                      title="Eliminar producto"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -763,11 +833,17 @@ export default function ProductsPage() {
                 </td>
               </tr>
             ))}
-            
+
             {paginatedProducts.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                  No se encontraron productos
+                <td colSpan={5} className="px-6 py-16 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                      <Package className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-500 font-medium">No se encontraron productos</p>
+                    <p className="text-sm text-gray-400">Intenta ajustar los filtros de búsqueda</p>
+                  </div>
                 </td>
               </tr>
             )}
@@ -776,22 +852,22 @@ export default function ProductsPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
-            <p className="text-sm text-gray-500">
-              Página {currentPage} de {totalPages}
+          <div className="flex items-center justify-between px-6 py-5 border-t-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+            <p className="text-sm font-medium text-gray-600">
+              Página <span className="text-blue-600 font-bold">{currentPage}</span> de <span className="text-blue-600 font-bold">{totalPages}</span>
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-2.5 rounded-xl border-2 border-gray-300 hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-2.5 rounded-xl border-2 border-gray-300 hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>

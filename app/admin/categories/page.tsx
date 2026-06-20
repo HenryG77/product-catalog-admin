@@ -171,15 +171,20 @@ export default function CategoriesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Categorías</h1>
-          <p className="text-gray-500 mt-1">Organiza tus productos en categorías</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text">Categorías</h1>
+          <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm font-medium">
+              <Tag className="w-4 h-4" />
+              <span>{filteredCategories.length} categorías</span>
+            </div>
+          </div>
         </div>
         <button
           onClick={startCreate}
           disabled={isCreating || !!editingId}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm hover:shadow"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl font-medium hover:from-purple-700 hover:to-purple-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 active:scale-95"
         >
           <Plus className="w-4 h-4" />
           Nueva categoría
@@ -188,42 +193,44 @@ export default function CategoriesPage() {
 
       {/* Search - Show when NOT creating */}
       {!isCreating && !editingId && (
-        <div className="flex flex-wrap gap-3">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar categorías..."
-              className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 transition-all"
-            />
+        <div className="bg-gradient-to-br from-white to-gray-50 p-5 rounded-2xl border border-gray-200 shadow-lg">
+          <div className="flex flex-wrap gap-3">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar categorías..."
+                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-gray-900 bg-white transition-all hover:border-gray-300"
+              />
+            </div>
+
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-gray-900 bg-white transition-all hover:border-gray-300 cursor-pointer min-w-[160px]"
+            >
+              <option value="all">Todos los estados</option>
+              <option value="active">Activos</option>
+              <option value="inactive">Inactivos</option>
+            </select>
           </div>
-          
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900"
-          >
-            <option value="all">Todos los estados</option>
-            <option value="active">Activos</option>
-            <option value="inactive">Inactivos</option>
-          </select>
         </div>
       )}
 
       {/* Create/Edit Form */}
       {(isCreating || editingId) && (
-        <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-              <Tag className="w-5 h-5 text-blue-600" />
+        <div className="bg-gradient-to-br from-white via-white to-purple-50/30 rounded-2xl border-2 border-purple-100 p-6 shadow-xl">
+          <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-200">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
+              <Tag className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-xl font-bold text-gray-900">
                 {editingId ? 'Editar categoría' : 'Nueva categoría'}
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-600 mt-0.5">
                 {editingId ? 'Modifica los datos de la categoría' : 'Completa los datos para crear una nueva categoría'}
               </p>
             </div>
@@ -292,64 +299,66 @@ export default function CategoriesPage() {
 
       {/* Search - Show when creating/editing, after form */}
       {(isCreating || editingId) && (
-        <div className="flex flex-wrap gap-3">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar categorías..."
-              className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 transition-all"
-            />
+        <div className="bg-gradient-to-br from-white to-gray-50 p-5 rounded-2xl border border-gray-200 shadow-lg">
+          <div className="flex flex-wrap gap-3">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar categorías..."
+                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-gray-900 bg-white transition-all hover:border-gray-300"
+              />
+            </div>
+
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-gray-900 bg-white transition-all hover:border-gray-300 cursor-pointer min-w-[160px]"
+            >
+              <option value="all">Todos los estados</option>
+              <option value="active">Activos</option>
+              <option value="inactive">Inactivos</option>
+            </select>
           </div>
-          
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900"
-          >
-            <option value="all">Todos los estados</option>
-            <option value="active">Activos</option>
-            <option value="inactive">Inactivos</option>
-          </select>
         </div>
       )}
 
       {/* Categories List */}
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+      <div className="bg-white rounded-2xl border-2 border-gray-200 overflow-hidden shadow-xl">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-100">
+          <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nombre</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Descripción</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Estado</th>
+              <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {paginatedCategories.map((category) => (
-              <tr key={category.id} className="hover:bg-gray-50 transition-colors">
+              <tr key={category.id} className="hover:bg-gradient-to-r hover:from-purple-50/50 hover:to-transparent transition-all duration-200 group">
                 <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                      <Tag className="w-4 h-4 text-gray-500" />
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center ring-2 ring-purple-200 group-hover:ring-purple-300 transition-all shadow-sm">
+                      <Tag className="w-5 h-5 text-purple-600" />
                     </div>
-                    <span className="font-medium text-gray-900">{category.name}</span>
+                    <span className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">{category.name}</span>
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                  {category.description || '-'}
+                  {category.description || <span className="text-gray-400">Sin descripción</span>}
                 </td>
                 <td className="px-6 py-4">
-                  <label className="relative inline-flex items-center cursor-pointer">
+                  <label className="relative inline-flex items-center cursor-pointer group/toggle">
                     <input
                       type="checkbox"
                       checked={category.active}
                       onChange={() => handleToggleActive(category.id, category.active)}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                    <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-green-500 peer-checked:to-emerald-500 shadow-sm"></div>
                   </label>
                 </td>
                 <td className="px-6 py-4 text-right">
@@ -357,7 +366,7 @@ export default function CategoriesPage() {
                     <button
                       onClick={() => startEdit(category)}
                       disabled={isCreating || editingId === category.id}
-                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+                      className="p-2.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all hover:shadow-md active:scale-95 disabled:opacity-50"
                       title="Editar"
                     >
                       <Edit className="w-4 h-4" />
@@ -365,7 +374,7 @@ export default function CategoriesPage() {
                     <button
                       onClick={() => handleDelete(category.id)}
                       disabled={isCreating || editingId === category.id}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                      className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all hover:shadow-md active:scale-95 disabled:opacity-50"
                       title="Eliminar"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -374,11 +383,21 @@ export default function CategoriesPage() {
                 </td>
               </tr>
             ))}
-            
+
             {paginatedCategories.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
-                  {searchTerm ? 'No se encontraron categorías' : 'No hay categorías. Crea la primera.'}
+                <td colSpan={4} className="px-6 py-16 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center">
+                      <Tag className="w-8 h-8 text-purple-400" />
+                    </div>
+                    <p className="text-gray-500 font-medium">
+                      {searchTerm ? 'No se encontraron categorías' : 'No hay categorías'}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {searchTerm ? 'Intenta ajustar los filtros de búsqueda' : 'Crea la primera categoría para organizar tus productos'}
+                    </p>
+                  </div>
                 </td>
               </tr>
             )}
@@ -387,22 +406,22 @@ export default function CategoriesPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
-            <p className="text-sm text-gray-500">
-              Página {currentPage} de {totalPages}
+          <div className="flex items-center justify-between px-6 py-5 border-t-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+            <p className="text-sm font-medium text-gray-600">
+              Página <span className="text-purple-600 font-bold">{currentPage}</span> de <span className="text-purple-600 font-bold">{totalPages}</span>
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-2.5 rounded-xl border-2 border-gray-300 hover:bg-purple-50 hover:border-purple-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-2.5 rounded-xl border-2 border-gray-300 hover:bg-purple-50 hover:border-purple-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
