@@ -14,7 +14,9 @@ import {
   ChevronRight,
   Store,
   Image,
-  X
+  X,
+  Users,
+  Shield
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -23,6 +25,7 @@ interface NavItem {
   href: string
   icon: React.ElementType
   children?: { label: string; href: string }[]
+  requiresSuperAdmin?: boolean
 }
 
 const navigation: NavItem[] = [
@@ -45,6 +48,12 @@ const navigation: NavItem[] = [
     label: 'Banners',
     href: '/admin/banners',
     icon: Image,
+  },
+  {
+    label: 'Usuarios',
+    href: '/admin/users',
+    icon: Users,
+    requiresSuperAdmin: true
   },
 ]
 
@@ -79,10 +88,12 @@ const settingsNavigation: NavItem[] = [
 interface AdminSidebarProps {
   isOpen: boolean
   onClose: () => void
+  userRole?: string
 }
 
-export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
+export function AdminSidebar({ isOpen, onClose, userRole }: AdminSidebarProps) {
   const pathname = usePathname()
+  const isSuperAdmin = userRole === 'superadmin'
 
   const isActive = (href: string) => {
     if (href === '/admin') {
@@ -90,6 +101,14 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     }
     return pathname.startsWith(href)
   }
+
+  // Filtrar navegación según permisos
+  const visibleNavigation = navigation.filter(item => {
+    if (item.requiresSuperAdmin && !isSuperAdmin) {
+      return false
+    }
+    return true
+  })
 
   return (
     <>
@@ -113,9 +132,15 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         <div className="h-16 flex items-center justify-between px-6 border-b border-gray-100">
           <Link href="/admin" className="flex items-center gap-2" onClick={onClose}>
             <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-              <Store className="w-5 h-5 text-white" />
+              {isSuperAdmin ? (
+                <Shield className="w-5 h-5 text-white" />
+              ) : (
+                <Store className="w-5 h-5 text-white" />
+              )}
             </div>
-            <span className="font-semibold text-gray-900">Admin</span>
+            <span className="font-semibold text-gray-900">
+              {isSuperAdmin ? 'SuperAdmin' : 'Admin'}
+            </span>
           </Link>
 
           {/* Close button - only visible on mobile */}
@@ -132,10 +157,10 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           {/* Main Section */}
           <div className="mb-6">
             <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-              Tu Tienda
+              {isSuperAdmin ? 'Administración' : 'Tu Tienda'}
             </p>
             <ul className="space-y-0.5">
-              {navigation.map((item) => (
+              {visibleNavigation.map((item) => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
@@ -143,12 +168,17 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                     className={cn(
                       'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                       isActive(item.href)
-                        ? 'bg-blue-50 text-blue-700'
+                        ? item.requiresSuperAdmin
+                          ? 'bg-green-50 text-green-700'
+                          : 'bg-blue-50 text-blue-700'
                         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     )}
                   >
                     <item.icon className="w-4 h-4" />
                     {item.label}
+                    {item.requiresSuperAdmin && (
+                      <Shield className="w-3 h-3 ml-auto text-green-600" />
+                    )}
                   </Link>
                 </li>
               ))}

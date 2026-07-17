@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { db } from '@/lib/db'
 
 export async function GET() {
   try {
-    const categories = await prisma.category.findMany({
+    const categories = await db.categories.findMany({
       include: {
-        store: true
+        stores: true
       },
       orderBy: { name: 'asc' }
     })
@@ -22,12 +22,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     
     // For now, use a default store ID - in multi-tenant this would be dynamic
-    const store = await prisma.store.findFirst()
+    const store = await db.stores.findFirst()
     if (!store) {
       return NextResponse.json({ error: 'No store configured' }, { status: 400 })
     }
 
-    const category = await prisma.category.create({
+    const category = await db.categories.create({
       data: {
         ...body,
         storeId: store.id
@@ -50,7 +50,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Category ID is required' }, { status: 400 })
     }
 
-    const category = await prisma.category.update({
+    const category = await db.categories.update({
       where: { id },
       data: updateData
     })

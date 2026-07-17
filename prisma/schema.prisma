@@ -7,130 +7,111 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Store {
-  id              String     @id @default(cuid())
-  name            String
-  logo            String
-  whatsapp        String
-  primaryColor    String     @default("#3b82f6")
-  secondaryColor  String     @default("#1e40af")
-  description     String
-  email           String?
-  address         String?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  categories      Category[]
-  products        Product[]
-  banners         Banner[]
+model Admin {
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  password           String
+  name               String
+  role               String   @default("admin")
+  active             Boolean  @default(true)
+  mustChangePassword Boolean  @default(false)
+  createdAt          DateTime @default(now()) @db.Timestamp(6)
+  updatedAt          DateTime @updatedAt @db.Timestamp(6)
 
-  // Footer fields
-  footerCopyright String     @default("© 2024 Todos los derechos reservados") @map("footer_copyright")
-  
-  showFacebook    Boolean    @default(false) @map("show_facebook")
-  facebookUrl     String?    @map("facebook_url")
-  
-  showInstagram   Boolean    @default(false) @map("show_instagram")
-  instagramUrl    String?    @map("instagram_url")
-  
-  showTiktok      Boolean    @default(false) @map("show_tiktok")
-  tiktokUrl       String?    @map("tiktok_url")
-  
-  showAddress     Boolean    @default(false) @map("show_address")
-  addressText     String?    @map("address_text")
-  
-  showPhone       Boolean    @default(false) @map("show_phone")
-  phoneText       String?    @map("phone_text")
-  
-  showEmail       Boolean    @default(false) @map("show_email")
-  emailText       String?    @map("email_text")
-  
-  showHours       Boolean    @default(false) @map("show_hours")
-  hoursText       String?    @map("hours_text")
-
-  @@map("stores")
+  @@index([email])
+  @@index([role])
 }
 
-model Category {
-  id          String    @id @default(cuid())
+model banners {
+  id              String      @id
+  image           String
+  title           String?
+  description     String?
+  link            String?
+  whatsappMessage String?     @map("whatsapp_message")
+  isActive        Boolean     @default(true) @map("is_active")
+  order           Int         @default(0)
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @map("updated_at")
+  storeId         String      @map("store_id")
+  categoryId      String?     @map("category_id")
+  category        categories? @relation(fields: [categoryId], references: [id])
+  store           stores      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+}
+
+model categories {
+  id          String     @id
   name        String
   description String?
-  active      Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  active      Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime
   storeId     String
-  store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  products    Product[]
-  banners     Banner[]
+  banners     banners[]
+  stores      stores     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  products    products[]
 
   @@unique([storeId, name])
-  @@map("categories")
 }
 
-model Product {
-  id              String         @id @default(cuid())
+model product_images {
+  id         String   @id
+  url        String
+  order      Int      @default(0)
+  created_at DateTime @default(now())
+  product_id String
+  products   products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@index([product_id])
+}
+
+model products {
+  id              String           @id
   name            String
   description     String
   price           Float
   image           String
   whatsappMessage String
-  active          Boolean        @default(true)
-  currency        String         @default("PYG")
-  lastUnits       Int?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  active          Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime
   storeId         String
   categoryId      String
-  category        Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  store           Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  images          ProductImage[]
-
-  @@map("products")
+  currency        String           @default("PYG")
+  lastUnits       Int?
+  product_images  product_images[]
+  categories      categories       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  stores          stores           @relation(fields: [storeId], references: [id], onDelete: Cascade)
 }
 
-model Admin {
-  id        String   @id
-  email     String   @unique
-  password  String
-  name      String
-  role      String   @default("admin")
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now()) @db.Timestamp(6)
-  updatedAt DateTime @db.Timestamp(6)
-
-  @@index([email])
-}
-
-model Banner {
-  id              String    @id @default(cuid())
-  image           String
-  title           String?
-  description     String?
-  link            String?
-  whatsappMessage String?   @map("whatsapp_message")
-  isActive        Boolean   @default(true) @map("is_active")
-  order           Int       @default(0)
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
-  
-  // Relations
-  storeId         String    @map("store_id")
-  store           Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  categoryId      String?   @map("category_id")
-  category        Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-
-  @@map("banners")
-}
-
-model ProductImage {
-  id          String   @id @default(cuid())
-  url         String
-  order       Int      @default(0)
-  createdAt   DateTime @default(now()) @map("created_at")
-  
-  // Relations
-  productId   String   @map("product_id")
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@map("product_images")
-  @@index([productId])
+model stores {
+  id               String       @id
+  name             String
+  logo             String
+  whatsapp         String
+  primaryColor     String       @default("#3b82f6")
+  secondaryColor   String       @default("#1e40af")
+  description      String
+  email            String?
+  address          String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime
+  footer_copyright String       @default("© 2024 Todos los derechos reservados")
+  show_facebook    Boolean      @default(false)
+  facebook_url     String?
+  show_instagram   Boolean      @default(false)
+  instagram_url    String?
+  show_tiktok      Boolean      @default(false)
+  tiktok_url       String?
+  show_address     Boolean      @default(false)
+  address_text     String?
+  show_phone       Boolean      @default(false)
+  phone_text       String?
+  show_email       Boolean      @default(false)
+  email_text       String?
+  show_hours       Boolean      @default(false)
+  hours_text       String?
+  banners          banners[]
+  categories       categories[]
+  products         products[]
 }

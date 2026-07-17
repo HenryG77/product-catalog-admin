@@ -29,8 +29,15 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (response.ok && data.success) {
-        // Login exitoso, redirigir al admin
-        router.push('/admin')
+        // Verificar si debe cambiar la contraseña
+        if (data.mustChangePassword && data.tempToken) {
+          // Guardar el token temporal y redirigir a cambio de contraseña
+          localStorage.setItem('tempToken', data.tempToken)
+          router.push('/change-password')
+        } else {
+          // Login exitoso, redirigir al admin
+          router.push('/admin')
+        }
       } else {
         // Mostrar error
         setError(data.error || 'Error al iniciar sesión')
@@ -161,17 +168,6 @@ export default function LoginPage() {
               </button>
             </div>
           </form>
-
-          {/* Demo Credentials */}
-          <div className="mt-4 sm:mt-6 border-t border-gray-200 pt-4 sm:pt-6">
-            <div className="text-xs sm:text-sm text-gray-600">
-              <p className="font-medium mb-1 sm:mb-2">Credenciales de Demo:</p>
-              <div className="bg-gray-50 rounded p-2 sm:p-3 text-xs sm:text-sm">
-                <p><strong>Email:</strong> <span className="text-gray-700">admin@tienda.com</span></p>
-                <p><strong>Contraseña:</strong> <span className="text-gray-700">admin123</span></p>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Footer */}

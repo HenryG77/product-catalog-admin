@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { db } from '@/lib/db'
 
 const MAX_IMAGES_PER_PRODUCT = 15
 
@@ -13,7 +11,7 @@ export async function GET(
   try {
     const { id } = params
 
-    const images = await prisma.productImage.findMany({
+    const images = await db.product_images.findMany({
       where: { productId: id },
       orderBy: { order: 'asc' }
     })
@@ -46,7 +44,7 @@ export async function POST(
     }
 
     // Check current image count
-    const currentCount = await prisma.productImage.count({
+    const currentCount = await db.product_images.count({
       where: { productId: id }
     })
 
@@ -58,16 +56,16 @@ export async function POST(
     }
 
     // Get max order for new images
-    const lastImage = await prisma.productImage.findFirst({
+    const lastImage = await db.product_images.findFirst({
       where: { productId: id },
       orderBy: { order: 'desc' }
     })
     const startOrder = (lastImage?.order ?? -1) + 1
 
     // Create images
-    const createdImages = await prisma.$transaction(
+    const createdImages = await db.$transaction(
       images.map((url, index) =>
-        prisma.productImage.create({
+        db.product_images.create({
           data: {
             url,
             order: startOrder + index,

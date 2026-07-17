@@ -65,7 +65,11 @@ export default function AdminLayout({
 
   return (
     <div className={`min-h-screen bg-gray-50 ${inter.className}`}>
-      <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <AdminSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        userRole={user?.role}
+      />
 
       <div className="lg:ml-64 min-h-screen flex flex-col">
         <AdminHeader

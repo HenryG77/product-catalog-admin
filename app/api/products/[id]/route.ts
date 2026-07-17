@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { db } from '@/lib/db'
 
 // GET /api/products/[id] - Obtener un producto específico con imágenes
 export async function GET(
@@ -7,12 +7,12 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const product = await prisma.product.findUnique({
+    const product = await db.products.findUnique({
       where: { id: params.id },
       include: {
-        category: true,
-        store: true,
-        images: {
+        categories: true,
+        stores: true,
+        product_images: {
           orderBy: { order: 'asc' }
         }
       }
@@ -36,13 +36,13 @@ export async function PUT(
   try {
     const body = await request.json()
     
-    const product = await prisma.product.update({
+    const product = await db.products.update({
       where: { id: params.id },
       data: body,
       include: {
-        category: true,
-        store: true,
-        images: {
+        categories: true,
+        stores: true,
+        product_images: {
           orderBy: { order: 'asc' }
         }
       }
@@ -64,7 +64,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const product = await prisma.product.delete({
+    const product = await db.products.delete({
       where: { id: params.id }
     })
     
