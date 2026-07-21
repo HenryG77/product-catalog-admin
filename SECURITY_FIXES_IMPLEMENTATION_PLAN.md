@@ -40,7 +40,7 @@ git commit -m "Etapa X: [descripción]"
 ETAPA 1: FUNDACIÓN ⚪ (Sin Riesgo)
 ├─ Dependencias, headers, configuración
 ├─ Duración: 30-45 min
-└─ Estado: [ ] PENDIENTE
+└─ Estado: [x] COMPLETADO ✅
 
 ETAPA 2: INFRAESTRUCTURA 🟢 (Nuevos Módulos)
 ├─ Rate limiting, error handler, validación
@@ -79,15 +79,15 @@ ETAPA 6: VALIDACIÓN FINAL 🔵 (Testing)
 ### Tareas:
 
 #### 1.1 - V-001: Actualizar dependencias
-- [ ] Actualizar Next.js: `14.2.5` → `14.2.35` (o `15.5.16+`)
-- [ ] Actualizar postcss a última versión
-- [ ] Actualizar eslint-config-next
-- [ ] Ejecutar `npm audit fix`
-- [ ] Archivo: `package.json`
+- [x] Actualizar Next.js: `14.2.5` → `14.2.35` (o `15.5.16+`)
+- [x] Actualizar postcss a última versión
+- [x] Actualizar eslint-config-next
+- [x] Ejecutar `npm audit fix`
+- [x] Archivo: `package.json`
 
 #### 1.2 - V-008: Headers de seguridad HTTP
-- [ ] Configurar headers en `next.config.js`
-- [ ] Headers a agregar:
+- [x] Configurar headers en `next.config.js`
+- [x] Headers a agregar:
   - Strict-Transport-Security
   - X-Frame-Options
   - X-Content-Type-Options
@@ -95,49 +95,49 @@ ETAPA 6: VALIDACIÓN FINAL 🔵 (Testing)
   - Referrer-Policy
   - Permissions-Policy
   - Content-Security-Policy
-- [ ] Archivo: `next.config.js`
+- [x] Archivo: `next.config.js`
 
 #### 1.3 - V-007: Limpiar .env del repositorio
-- [ ] Verificar que `.env` esté en `.gitignore`
-- [ ] Agregar `.env.local` y `.env.*.local` a `.gitignore`
-- [ ] Remover `.env` del staging: `git rm --cached .env`
-- [ ] Archivo: `.gitignore`
+- [x] Verificar que `.env` esté en `.gitignore`
+- [x] Agregar `.env.local` y `.env.*.local` a `.gitignore`
+- [x] Remover `.env` del staging: `git rm --cached .env`
+- [x] Archivo: `.gitignore`
 
 #### 1.4 - Crear .env.example
-- [ ] Crear archivo `.env.example` con placeholders
-- [ ] NO incluir valores reales
-- [ ] Documentar cada variable
-- [ ] Archivo: `.env.example` (NUEVO)
+- [x] Crear archivo `.env.example` con placeholders
+- [x] NO incluir valores reales
+- [x] Documentar cada variable
+- [x] Archivo: `.env.example` (NUEVO)
 
 ### Verificación Etapa 1:
 ```bash
 # 1. Instalación
-[ ] npm install
-[ ] Sin errores de dependencias
+[x] npm install
+[x] Sin errores de dependencias
 
 # 2. Build
-[ ] npm run build
-[ ] Build exitoso sin errores
+[x] npm run build
+[x] Build exitoso sin errores
 
 # 3. Servidor dev
-[ ] npm run dev
-[ ] Inicia correctamente
+[x] npm run dev
+[x] Inicia correctamente
 
 # 4. Testing funcional
-[ ] Abrir http://localhost:3001
-[ ] Login funciona
-[ ] Ver productos funciona
-[ ] Panel admin accesible
+[x] Abrir http://localhost:3000
+[x] Login funciona
+[x] Ver productos funciona
+[x] Panel admin accesible
 
 # 5. Verificar headers (DevTools → Network → Headers)
-[ ] X-Frame-Options presente
-[ ] CSP presente
-[ ] HSTS presente
+[x] X-Frame-Options presente
+[x] CSP presente
+[x] HSTS presente
 
 # 6. Git
-[ ] git status (verificar .env no está staged)
-[ ] git add .
-[ ] git commit -m "Etapa 1: Security - Update dependencies and add security headers"
+[x] git status (verificar .env no está staged)
+[x] git add .
+[x] git commit -m "Etapa 1: Security - Update dependencies and add security headers"
 ```
 
 ---
