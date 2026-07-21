@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyToken } from '@/lib/auth'
+import { verifyToken, isInactivityExpired, refreshActivityToken } from '@/lib/auth'
 
 // Rutas que requieren autenticación
 const protectedRoutes = ['/admin']
@@ -71,6 +71,20 @@ export async function middleware(request: NextRequest) {
         return response
       }
 
+      // SECURITY: Verificar timeout de inactividad (30 minutos por defecto)
+      if (isInactivityExpired(decoded)) {
+        // Sesión expirada por inactividad
+        if (pathname.startsWith('/api/')) {
+          return NextResponse.json(
+            { error: 'Sesión expirada por inactividad' },
+            { status: 401 }
+          )
+        }
+        const response = NextResponse.redirect(new URL('/login', request.url))
+        response.cookies.delete('auth-token')
+        return response
+      }
+
       // Verificar si la ruta requiere SUPERADMIN
       const isSuperAdminRoute = superAdminRoutes.some(route => pathname.startsWith(route))
 
@@ -84,11 +98,25 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/admin', request.url))
       }
 
+      // SECURITY: Refrescar token con nuevo timestamp de actividad
+      // Esto extiende la sesión mientras el usuario esté activo
+      const refreshedToken = refreshActivityToken(decoded)
+
       // Continuar con headers personalizados
       const response = NextResponse.next()
       response.headers.set('x-user-id', decoded.id)
       response.headers.set('x-user-email', decoded.email)
       response.headers.set('x-user-role', decoded.role)
+
+      // Actualizar cookie con token refrescado
+      response.cookies.set('auth-token', refreshedToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 60 * 60 * 24 * 7, // 7 días
+        path: '/'
+      })
+
       return response
 
     } catch (error) {

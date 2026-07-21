@@ -11,6 +11,9 @@ export interface JWTPayload {
   email: string
   name: string
   role: string
+  iat?: number // Issued at (timestamp)
+  exp?: number // Expiration (timestamp)
+  lastActivity?: number // Last activity timestamp for inactivity timeout
 }
 
 export interface AuthResponse {

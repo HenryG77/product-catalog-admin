@@ -1,18 +1,44 @@
+import crypto from 'crypto'
+
 /**
- * Genera una contraseña temporal segura
- * Formato: [Mayúscula][minúsculas][4 dígitos]!
- * Ejemplo: Temporal1234!
+ * Genera una contraseña temporal criptográficamente segura
+ *
+ * Formato: 16 caracteres mezclando mayúsculas, minúsculas, números y símbolos
+ * Ejemplo: K9m#Zp2@Wr5$Qx8!
+ *
+ * Usa crypto.randomInt en lugar de Math.random para mayor seguridad
  */
 export function generateTemporaryPassword(): string {
-  const adjectives = [
-    'Temporal', 'Seguro', 'Nuevo', 'Acceso', 'Inicio',
-    'Sistema', 'Admin', 'Portal', 'Panel', 'Clave'
+  const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  const lowercase = 'abcdefghijklmnopqrstuvwxyz'
+  const numbers = '0123456789'
+  const symbols = '!@#$%&*'
+
+  // Garantizar al menos uno de cada tipo
+  const password: string[] = [
+    uppercase[crypto.randomInt(0, uppercase.length)],
+    uppercase[crypto.randomInt(0, uppercase.length)],
+    lowercase[crypto.randomInt(0, lowercase.length)],
+    lowercase[crypto.randomInt(0, lowercase.length)],
+    numbers[crypto.randomInt(0, numbers.length)],
+    numbers[crypto.randomInt(0, numbers.length)],
+    symbols[crypto.randomInt(0, symbols.length)],
+    symbols[crypto.randomInt(0, symbols.length)]
   ]
 
-  const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)]
-  const randomNumber = Math.floor(1000 + Math.random() * 9000) // 4 dígitos
+  // Rellenar el resto con caracteres aleatorios
+  const allChars = uppercase + lowercase + numbers + symbols
+  for (let i = password.length; i < 16; i++) {
+    password.push(allChars[crypto.randomInt(0, allChars.length)])
+  }
 
-  return `${randomAdjective}${randomNumber}!`
+  // Mezclar el array de forma criptográficamente segura
+  for (let i = password.length - 1; i > 0; i--) {
+    const j = crypto.randomInt(0, i + 1);
+    [password[i], password[j]] = [password[j], password[i]]
+  }
+
+  return password.join('')
 }
 
 /**
