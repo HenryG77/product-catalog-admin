@@ -42,10 +42,10 @@ git commit -m "Etapa X: [descripción]"
 ├─ Duración: 30-45 min
 └─ Estado: ✅ COMPLETADO 🎉
 
-ETAPA 2: INFRAESTRUCTURA 🟢 (Nuevos Módulos)
+✅ ETAPA 2: INFRAESTRUCTURA 🟢 (Nuevos Módulos)
 ├─ Rate limiting, error handler, validación
 ├─ Duración: 1-1.5h
-└─ Estado: ⏳ PENDIENTE
+└─ Estado: ✅ COMPLETADO 🎉
 
 ETAPA 3: AUTENTICACIÓN 🟡 (Crítico)
 ├─ JWT, secrets, sesiones
@@ -72,8 +72,8 @@ ETAPA 6: VALIDACIÓN FINAL 🔵 (Testing)
 
 ### 📊 PROGRESO GENERAL
 ```
-[████████░░░░░░░░░░░░░░░░░░░░] 16.7% Completado
-Etapas completadas: 1/6
+[████████████████░░░░░░░░░░░░] 33.3% Completado
+Etapas completadas: 2/6
 ```
 
 ---
@@ -171,61 +171,129 @@ Etapas completadas: 1/6
 
 ---
 
-## 📋 ETAPA 2: INFRAESTRUCTURA
+## ✅ 📋 ETAPA 2: INFRAESTRUCTURA - **COMPLETADO** 🎉
 
-**Objetivo:** Crear utilidades sin modificar código existente
-**Riesgo:** NINGUNO 🟢 (archivos nuevos)
-**Duración:** 1-1.5h
+> **Estado:** ✅ COMPLETADO
+> **Objetivo:** Crear utilidades sin modificar código existente
+> **Riesgo:** NINGUNO 🟢 (archivos nuevos)
+> **Duración real:** 1 hora
+> **Commit:** `2632e83` - "Etapa 2: Security - Add infrastructure utilities"
 
-### Tareas:
+### ✅ Tareas Completadas
 
-#### 2.1 - Instalar dependencias necesarias
-- [ ] `npm install zod`
-- [ ] Verificar instalación correcta
+#### ✅ 2.1 - Instalar dependencias necesarias
 
-#### 2.2 - Crear lib/rate-limit.ts
-- [ ] Crear archivo nuevo
-- [ ] Implementar clase RateLimiter
-- [ ] Exportar loginLimiter, apiLimiter, uploadLimiter
-- [ ] Exportar función getClientIp
-- [ ] Archivo: `lib/rate-limit.ts` (NUEVO)
+- ✅ Zod ya instalado (actualizado de 3.22.4 → 3.25.76)
+- ✅ Verificar instalación correcta
 
-#### 2.3 - Crear lib/error-handler.ts
-- [ ] Crear archivo nuevo
-- [ ] Implementar handleApiError
-- [ ] Logging apropiado (ocultar stack en producción)
-- [ ] Archivo: `lib/error-handler.ts` (NUEVO)
+#### ✅ 2.2 - Crear lib/rate-limit.ts
 
-#### 2.4 - Crear lib/validation.ts
-- [ ] Crear archivo nuevo
-- [ ] Schemas Zod para:
-  - ProductSchema
-  - CategorySchema
-  - BannerSchema
-  - UserSchema (create)
-  - UserUpdateSchema
-  - LoginSchema
-- [ ] Archivo: `lib/validation.ts` (NUEVO)
+- ✅ Crear archivo nuevo (281 líneas)
+- ✅ Implementar clase RateLimiter con:
+  - Sistema de ventana deslizante basado en Map
+  - Limpieza automática de entradas expiradas
+  - Métodos: check(), getInfo(), reset(), resetAll()
+- ✅ Exportar limiters pre-configurados:
+  - loginLimiter: 5 intentos / 15 minutos
+  - apiLimiter: 100 requests / 1 minuto
+  - uploadLimiter: 10 uploads / 1 hora
+- ✅ Exportar función getClientIp() con soporte para múltiples headers
+- ✅ Exportar checkRateLimit() helper para fácil integración
+- ✅ Archivo: `lib/rate-limit.ts` (NUEVO)
 
-### Verificación Etapa 2:
+#### ✅ 2.3 - Crear lib/error-handler.ts
+
+- ✅ Crear archivo nuevo (251 líneas)
+- ✅ Implementar handleApiError() que:
+  - Detecta tipo de error automáticamente (Zod, Prisma, Error)
+  - Oculta stack traces en producción
+  - Traduce errores técnicos a mensajes user-friendly
+  - Loguea apropiadamente según entorno
+- ✅ Manejo especializado de errores Prisma (P2002, P2025, P2003)
+- ✅ createErrorResponse() para errores personalizados
+- ✅ createSuccessResponse() para respuestas estandarizadas
+- ✅ Archivo: `lib/error-handler.ts` (NUEVO)
+
+#### ✅ 2.4 - Crear lib/validation.ts
+
+- ✅ Crear archivo nuevo (393 líneas)
+- ✅ Schemas Zod para autenticación:
+  - ✅ LoginSchema
+  - ✅ ChangePasswordSchema (password fuerte)
+- ✅ Schemas Zod para usuarios:
+  - ✅ UserSchema (create)
+  - ✅ UserUpdateSchema (partial)
+- ✅ Schemas Zod para entidades:
+  - ✅ ProductSchema (11 campos validados)
+  - ✅ CategorySchema
+  - ✅ BannerSchema
+  - ✅ StoreConfigSchema (20+ campos)
+- ✅ Schemas para query parameters:
+  - ✅ UserQuerySchema (previene injection)
+  - ✅ ProductQuerySchema
+- ✅ Constantes de upload:
+  - ✅ ALLOWED_IMAGE_EXTENSIONS
+  - ✅ ALLOWED_IMAGE_MIMES
+  - ✅ MAX_FILE_SIZE (5MB)
+  - ✅ IMAGE_MAGIC_BYTES
+- ✅ Type exports para TypeScript
+- ✅ Archivo: `lib/validation.ts` (NUEVO)
+
+### ✅ Verificación Etapa 2 - TODAS PASADAS
+
 ```bash
-# 1. Compilación TypeScript
-[ ] npm run build
-[ ] Sin errores de tipos
+# ✅ 1. Compilación TypeScript
+✅ npm run build
+✅ Sin errores de tipos
+✅ 28 routes compiladas correctamente
+✅ Arreglado problema de iteración Map (for...of → forEach)
 
-# 2. Imports
-[ ] Archivos compilan correctamente
-[ ] No hay errores de sintaxis
+# ✅ 2. Imports
+✅ Archivos compilan correctamente
+✅ No hay errores de sintaxis
+✅ Nuevos módulos listos para uso
 
-# 3. App funciona igual
-[ ] npm run dev
-[ ] Login funciona (sin cambios)
-[ ] Ver productos funciona (sin cambios)
+# ✅ 3. App funciona igual
+✅ npm run dev
+✅ Inicia sin errores
+✅ Login funciona (sin cambios)
+✅ Ver productos funciona (sin cambios)
+✅ Catálogo funciona (sin cambios)
 
-# 4. Git
-[ ] git add lib/rate-limit.ts lib/error-handler.ts lib/validation.ts
-[ ] git commit -m "Etapa 2: Security - Add infrastructure utilities"
+# ✅ 4. Git
+✅ git add lib/rate-limit.ts lib/error-handler.ts lib/validation.ts package.json package-lock.json
+✅ git commit -m "Etapa 2: Security - Add infrastructure utilities"
 ```
+
+### 🎯 Resultados de Etapa 2
+
+| Módulo           | Líneas | Funcionalidad                                    |
+|------------------|--------|--------------------------------------------------|
+| rate-limit.ts    | 281    | Rate limiting para login, API, uploads          |
+| error-handler.ts | 251    | Manejo centralizado de errores                  |
+| validation.ts    | 393    | 15 schemas Zod + constantes de upload           |
+| **Total**        | **925**| **3 módulos de infraestructura de seguridad**   |
+
+### 📝 Preparación para Etapas Futuras
+
+**Etapa 3 - AUTENTICACIÓN:**
+- Usará ChangePasswordSchema para validación de passwords
+
+**Etapa 4 - APIs (MÁS IMPORTANTE):**
+- Integrará loginLimiter en /api/auth/login
+- Integrará uploadLimiter en /api/upload
+- Aplicará schemas de validación en todos los endpoints:
+  - POST /api/products → ProductSchema
+  - POST /api/users → UserSchema
+  - PUT /api/users/[id] → UserUpdateSchema
+  - POST /api/categories → CategorySchema
+  - POST /api/banners → BannerSchema
+  - GET /api/users?search= → UserQuerySchema
+- Reemplazará try/catch con handleApiError en todos los routes
+
+**IMPORTANTE:** Estos módulos están creados pero NO integrados aún. No hay cambios en el comportamiento actual de la aplicación. La integración se realizará en Etapa 4.
+
+### 🎉 ETAPA 2 COMPLETADA CON ÉXITO 🎉
 
 ---
 

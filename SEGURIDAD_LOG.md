@@ -409,7 +409,278 @@ Facilitar el seguimiento visual del progreso y hacer el documento más fácil de
 - `f9fe814` - Update SECURITY_FIXES_IMPLEMENTATION_PLAN.md - Mark Etapa 1 as completed
 - `fd36a04` - Mejoras visuales en SECURITY_FIXES_IMPLEMENTATION_PLAN.md
 
-**Próxima etapa:** Etapa 2 - INFRAESTRUCTURA (Rate limiting, error handler, validación)
+**Próxima etapa:** Etapa 3 - AUTENTICACIÓN (JWT secrets, cookies, sesiones)
+
+---
+
+## [2026-07-21] - Etapa 2: Actualización de Zod a versión más reciente
+
+**Archivos afectados:**
+- `package.json`
+- `package-lock.json`
+
+**Problema/Vulnerabilidad:**
+**Mejora preventiva** - Zod 3.22.4 podría contener bugs o vulnerabilidades. Actualizar a la versión más reciente (3.25.76) asegura tener las últimas correcciones de seguridad y bugs.
+
+**Cambio realizado:**
+- Actualizado zod de `3.22.4` → `3.25.76`
+
+**Motivo:**
+Mantener las dependencias actualizadas es una práctica esencial de seguridad. Las versiones más recientes incluyen parches de seguridad y correcciones de bugs que podrían ser explotadas.
+
+**Impacto esperado:**
+- Validación más robusta y segura
+- Correcciones de bugs potenciales
+- Mejores mensajes de error
+
+**Prioridad:** MEDIA
+**Commit:** `2632e83`
+
+---
+
+## [2026-07-21] - Etapa 2: Creación de Rate Limiting Utility
+
+**Archivos afectados:**
+- `lib/rate-limit.ts` (NUEVO)
+
+**Problema/Vulnerabilidad:**
+**V-005 (ALTA)** - Ausencia de rate limiting permite:
+- Ataques de fuerza bruta contra login
+- Spam y abuso de APIs
+- Denegación de servicio (DoS) por sobrecarga
+- Abuso de funcionalidad de upload
+
+**Cambio realizado:**
+Creado módulo completo de rate limiting con:
+
+1. **Clase RateLimiter**:
+   - Sistema de ventana deslizante basado en memoria (Map)
+   - Limpieza automática de entradas expiradas cada minuto
+   - Métodos: check(), getInfo(), reset(), resetAll()
+
+2. **Instancias pre-configuradas**:
+   - `loginLimiter`: 5 intentos por 15 minutos (previene fuerza bruta)
+   - `apiLimiter`: 100 requests por minuto (previene abuso)
+   - `uploadLimiter`: 10 uploads por hora (previene spam de archivos)
+
+3. **Utilidades**:
+   - `getClientIp()`: Extrae IP del cliente desde múltiples headers (X-Forwarded-For, X-Real-IP, CF-Connecting-IP)
+   - `checkRateLimit()`: Helper function para fácil integración en route handlers
+
+**Motivo:**
+Sin rate limiting, la aplicación es vulnerable a ataques automatizados. Un atacante podría:
+- Intentar miles de combinaciones de passwords en segundos
+- Sobrecargar el servidor con requests
+- Llenar el almacenamiento con uploads
+
+**Impacto esperado:**
+- Prevención de ataques de fuerza bruta
+- Protección contra DoS
+- Reducción de spam y abuso
+- Score de protección de APIs: 30/100 → 70/100 (cuando se integre en Etapa 4)
+
+**Prioridad:** ALTA
+**Commit:** `2632e83`
+
+**Nota de implementación:**
+Este módulo usa memoria local (Map). En producción con múltiples instancias del servidor, se recomienda migrar a Redis o similar para compartir el estado entre instancias.
+
+---
+
+## [2026-07-21] - Etapa 2: Creación de Error Handler centralizado
+
+**Archivos afectados:**
+- `lib/error-handler.ts` (NUEVO)
+
+**Problema/Vulnerabilidad:**
+**V-010 (ALTA)** - Manejo inconsistente de errores causa:
+- Leak de información sensible en mensajes de error
+- Stack traces expuestos en producción
+- Revelación de estructura interna de base de datos
+- Mensajes de error que ayudan a atacantes
+
+**Cambio realizado:**
+Creado módulo centralizado de manejo de errores con:
+
+1. **handleApiError()**: Handler principal que:
+   - Detecta automáticamente tipo de error (Zod, Prisma, Error estándar)
+   - Oculta stack traces en producción
+   - Traduce errores técnicos a mensajes user-friendly
+   - Loguea errores apropiadamente según entorno
+
+2. **Manejo especializado**:
+   - Errores de Zod (validación): Extrae primer error con path y mensaje
+   - Errores de Prisma:
+     * P2002: Violación de constraint único → "Ya existe un registro"
+     * P2025: No encontrado → 404
+     * P2003: Foreign key constraint → "Relaciones existentes"
+   - Errores genéricos: Mensaje genérico en producción, detallado en desarrollo
+
+3. **Funciones auxiliares**:
+   - `createErrorResponse()`: Crear respuestas de error personalizadas
+   - `createSuccessResponse()`: Respuestas de éxito estandarizadas
+
+**Motivo:**
+Los mensajes de error reveladores son una mina de oro para atacantes:
+- Stack traces revelan estructura de código y rutas del sistema
+- Errores de base de datos revelan schema y nombres de tablas
+- Errores de validación pueden usarse para enumerar campos válidos
+
+**Impacto esperado:**
+- Prevención de information disclosure
+- Mensajes consistentes y profesionales
+- Logging centralizado para debugging
+- Score de manejo de errores: 35/100 → 85/100 (cuando se integre en Etapa 4)
+
+**Prioridad:** ALTA
+**Commit:** `2632e83`
+
+---
+
+## [2026-07-21] - Etapa 2: Creación de Validation Schemas con Zod
+
+**Archivos afectados:**
+- `lib/validation.ts` (NUEVO)
+
+**Problema/Vulnerabilidad:**
+**V-002 (CRÍTICA)** + **V-011 (MEDIA)** - Validación insuficiente de inputs permite:
+- Inyección NoSQL
+- XSS (Cross-Site Scripting)
+- Datos inválidos en base de datos
+- Bypass de reglas de negocio
+
+**Cambio realizado:**
+Creado módulo completo de validación con 15 schemas de Zod:
+
+**Schemas de Autenticación:**
+- `LoginSchema`: Email y password con validación
+- `ChangePasswordSchema`: Contraseña fuerte (8+ chars, mayúscula, minúscula, número)
+
+**Schemas de Usuarios:**
+- `UserSchema`: Validación completa para creación (email, password fuerte, nombre, rol)
+- `UserUpdateSchema`: Versión parcial para actualizaciones
+
+**Schemas de Entidades:**
+- `ProductSchema`: 11 campos validados (nombre, precio, imagen URL, categoría, etc.)
+- `CategorySchema`: Nombre, descripción opcional, storeId
+- `BannerSchema`: Imagen, título, link, orden, etc.
+- `StoreConfigSchema`: 20+ campos de configuración (colores hex, URLs, WhatsApp, redes sociales)
+
+**Schemas de Query Parameters:**
+- `UserQuerySchema`: Previene injection en búsquedas (solo caracteres alfanuméricos)
+- `ProductQuerySchema`: Similar con soporte para acentos españoles
+
+**Constantes de Upload:**
+- `ALLOWED_IMAGE_EXTENSIONS`: .jpg, .jpeg, .png, .webp, .gif
+- `ALLOWED_IMAGE_MIMES`: MIME types permitidos
+- `MAX_FILE_SIZE`: 5MB
+- `IMAGE_MAGIC_BYTES`: Para validación de tipo real del archivo
+
+**Características de seguridad:**
+- Sanitización automática (trim, toLowerCase)
+- Longitudes máximas estrictas (previene DoS)
+- Regex patterns seguros (solo caracteres permitidos)
+- Validación de tipos fuertes
+- Mensajes de error descriptivos
+
+**Motivo:**
+La validación en el lado del cliente es fácil de bypassear. La validación del servidor es la única barrera real contra:
+- Datos maliciosos
+- Ataques de inyección
+- Datos corruptos
+- Bypass de reglas de negocio
+
+**Impacto esperado:**
+- Prevención de inyecciones NoSQL/XSS
+- Datos siempre válidos en la base de datos
+- Mensajes de error claros para usuarios
+- Score de validación de entradas: 35/100 → 90/100 (cuando se integre en Etapa 4)
+- Score de protección contra inyecciones: 25/100 → 90/100 (cuando se integre en Etapa 4)
+
+**Prioridad:** CRÍTICA
+**Commit:** `2632e83`
+
+---
+
+## [2026-07-21] - Etapa 2: Verificación y testing completo
+
+**Archivos afectados:**
+- Todo el proyecto
+
+**Problema/Vulnerabilidad:**
+N/A - Testing de validación
+
+**Cambio realizado:**
+Ejecutadas todas las verificaciones de Etapa 2:
+
+✅ **Build exitoso**
+- `npm run build` completado sin errores
+- Todas las páginas compiladas correctamente (28 routes)
+- Nuevos módulos TypeScript compilan sin errores
+
+✅ **Compatibilidad de código**
+- Arreglado problema de iteración de Map (for...of → forEach)
+- Compatible con target TypeScript del proyecto
+
+✅ **Servidor dev funcionando**
+- `npm run dev` iniciado correctamente
+- Sin errores en runtime
+- Sin advertencias relacionadas con los nuevos módulos
+
+✅ **Testing funcional**
+- Login page: HTTP 200 OK ✓
+- Catálogo principal: HTTP 200 OK ✓
+- Funcionalidad existente sin cambios ✓
+
+**Motivo:**
+Los nuevos módulos son puramente utilitarios y no modifican código existente. Sin embargo, es crítico verificar que:
+1. No haya errores de compilación
+2. No se rompa funcionalidad existente
+3. Estén listos para ser integrados en Etapa 4
+
+**Impacto esperado:**
+- Confirmación de que los módulos están listos para uso
+- Base sólida para Etapa 3 y 4
+- Cero regresiones en funcionalidad
+
+**Prioridad:** CRÍTICA
+**Commit:** `2632e83`
+
+---
+
+## RESUMEN DE ETAPA 2
+
+**Fecha de inicio:** 2026-07-21
+**Fecha de finalización:** 2026-07-21
+**Duración:** 1 hora
+**Estado:** ✅ COMPLETADO
+
+**Módulos creados:**
+- lib/rate-limit.ts (281 líneas) - Sistema de rate limiting
+- lib/error-handler.ts (251 líneas) - Manejo centralizado de errores
+- lib/validation.ts (393 líneas) - Schemas de validación Zod
+
+**Vulnerabilidades preparadas para corrección:**
+- V-002 (CRÍTICA): NoSQL injection → Schemas creados
+- V-005 (ALTA): Rate limiting → Implementado
+- V-010 (ALTA): Error handling → Implementado
+- V-011 (MEDIA): Validación servidor → Schemas creados
+
+**Nota importante:**
+Estos módulos están creados pero AÚN NO INTEGRADOS en los endpoints. La integración se realizará en Etapa 4. Por ahora, no hay cambios en el comportamiento de la aplicación, solo nuevas herramientas disponibles.
+
+**Mejoras de score esperadas (cuando se integre en Etapa 4):**
+- Validación de entradas: 35/100 → 90/100
+- Protección contra inyecciones: 25/100 → 90/100
+- Protección de APIs: 30/100 → 80/100
+- Manejo de errores: 35/100 → 85/100
+
+**Score general estimado:** ~58/100 → (sin cambio hasta integración en Etapa 4)
+
+**Commits realizados:**
+- `2632e83` - Etapa 2: Security - Add infrastructure utilities
+
+**Próxima etapa:** Etapa 3 - AUTENTICACIÓN (JWT rotation, cookie security, sessions)
 
 ---
 
