@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { hashPassword } from '@/lib/auth'
 import { UserSchema, UserQuerySchema } from '@/lib/validation'
 import { handleApiError } from '@/lib/error-handler'
+import { apiLimiter, getClientIp } from '@/lib/rate-limit'
 
 /**
  * GET - Listar todos los usuarios
@@ -10,6 +11,20 @@ import { handleApiError } from '@/lib/error-handler'
  */
 export async function GET(request: NextRequest) {
   try {
+    // SECURITY: Rate limiting - 100 requests por minuto
+    const clientIp = getClientIp(request)
+    const isRateLimited = apiLimiter.check(clientIp)
+
+    if (isRateLimited) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Demasiadas solicitudes. Por favor intenta nuevamente más tarde.'
+        },
+        { status: 429 }
+      )
+    }
+
     const { searchParams } = new URL(request.url)
 
     // SECURITY: Validación con Zod de query parameters para prevenir NoSQL injection
@@ -80,6 +95,20 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Rate limiting - 100 requests por minuto
+    const clientIp = getClientIp(request)
+    const isRateLimited = apiLimiter.check(clientIp)
+
+    if (isRateLimited) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Demasiadas solicitudes. Por favor intenta nuevamente más tarde.'
+        },
+        { status: 429 }
+      )
+    }
+
     const body = await request.json()
 
     // SECURITY: Validación con Zod para prevenir NoSQL injection y datos inválidos

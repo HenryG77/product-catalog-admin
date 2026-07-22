@@ -2,10 +2,25 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { ProductSchema } from '@/lib/validation'
 import { handleApiError } from '@/lib/error-handler'
+import { productsLimiter, getClientIp } from '@/lib/rate-limit'
 import crypto from 'crypto'
 
 export async function GET(request: NextRequest) {
   try {
+    // SECURITY: Rate limiting - 200 requests por minuto
+    const clientIp = getClientIp(request)
+    const isRateLimited = productsLimiter.check(clientIp)
+
+    if (isRateLimited) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Demasiadas solicitudes. Por favor intenta nuevamente más tarde.'
+        },
+        { status: 429 }
+      )
+    }
+
     const products = await db.products.findMany({
       include: {
         categories: true,
@@ -25,6 +40,20 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Rate limiting - 200 requests por minuto
+    const clientIp = getClientIp(request)
+    const isRateLimited = productsLimiter.check(clientIp)
+
+    if (isRateLimited) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Demasiadas solicitudes. Por favor intenta nuevamente más tarde.'
+        },
+        { status: 429 }
+      )
+    }
+
     const body = await request.json()
 
     // For now, use a default store ID - in multi-tenant this would be dynamic

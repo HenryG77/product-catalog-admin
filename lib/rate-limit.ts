@@ -149,6 +149,15 @@ export const uploadLimiter = new RateLimiter(
   60 * 60 * 1000 // 1 hora
 )
 
+/**
+ * Rate limiter para endpoints de productos
+ * 200 requests por minuto (más permisivo por ser endpoint público)
+ */
+export const productsLimiter = new RateLimiter(
+  200,           // 200 requests
+  60 * 1000      // 1 minuto
+)
+
 // ============================================================================
 // Utilidades
 // ============================================================================
