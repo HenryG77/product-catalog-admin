@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { hashPassword } from '@/lib/auth'
 import { CreateUserRequest } from '@/lib/types'
+import { UserSchema } from '@/lib/validation'
 
 /**
  * GET - Listar todos los usuarios
@@ -70,23 +71,20 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body: CreateUserRequest = await request.json()
-    const { email, name, password, role, active = true } = body
+    const body = await request.json()
 
-    // Validaciones
-    if (!email || !name || !password || !role) {
+    // SECURITY: Validación con Zod para prevenir NoSQL injection y datos inválidos
+    const validation = UserSchema.safeParse(body)
+
+    if (!validation.success) {
+      const errorMessage = validation.error.errors[0]?.message || 'Datos inválidos'
       return NextResponse.json(
-        { success: false, error: 'Todos los campos son requeridos' },
+        { success: false, error: errorMessage },
         { status: 400 }
       )
     }
 
-    if (role !== 'admin' && role !== 'superadmin') {
-      return NextResponse.json(
-        { success: false, error: 'Rol inválido' },
-        { status: 400 }
-      )
-    }
+    const { email, name, password, role, active = true } = validation.data
 
     // Verificar si el email ya existe
     const existingUser = await db.admin.findUnique({
