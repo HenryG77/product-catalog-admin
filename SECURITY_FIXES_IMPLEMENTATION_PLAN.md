@@ -533,25 +533,35 @@ Etapas completadas: 3/6
 ✅ updatedAt generado en servidor (no manipulable)
 ```
 
-#### 4.3.5 - /api/products/[id] (PUT)
-- [ ] Validar con ProductSchema.partial()
-- [ ] Archivo: `app/api/products/[id]/route.ts`
+#### ✅ 4.3.5 - /api/products/[id] (PUT) - **COMPLETADO**
+- ✅ Validar con ProductSchema.partial()
+- ✅ Verificar que producto existe antes de actualizar
+- ✅ Generar updatedAt en servidor
+- ✅ Archivo: `app/api/products/[id]/route.ts`
+- ✅ Commit: `0663a99`
 
 **Testing 4.3.5:**
 ```bash
-[ ] Actualizar producto válido → Éxito
-[ ] Actualizar con datos inválidos → Error 400
+✅ ProductSchema.partial().safeParse() implementado
+✅ Validación antes de actualización
+✅ Retorna 404 si producto no existe
+✅ updatedAt generado en servidor
 ```
 
-#### 4.3.6 - /api/categories (POST, PUT)
-- [ ] Validar con CategorySchema
-- [ ] Archivo: `app/api/categories/route.ts`
+#### ✅ 4.3.6 - /api/categories (POST, PUT) - **COMPLETADO**
+- ✅ Validar POST con CategorySchema
+- ✅ Validar PUT con CategorySchema.partial()
+- ✅ Generar id y updatedAt en servidor
+- ✅ Verificar existencia antes de actualizar
+- ✅ Archivo: `app/api/categories/route.ts`
+- ✅ Commit: `585b712`
 
 **Testing 4.3.6:**
 ```bash
-[ ] Crear categoría válida → Éxito
-[ ] Actualizar categoría válida → Éxito
-[ ] Crear categoría sin nombre → Error 400
+✅ CategorySchema.safeParse() implementado (POST)
+✅ CategorySchema.partial().safeParse() implementado (PUT)
+✅ ID generado con crypto.randomUUID() en creación
+✅ Previene NoSQL injection en ambos endpoints
 ```
 
 #### 4.3.7 - /api/banners (POST)
