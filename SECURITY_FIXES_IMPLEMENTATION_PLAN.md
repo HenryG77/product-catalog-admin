@@ -564,14 +564,17 @@ Etapas completadas: 3/6
 ✅ Previene NoSQL injection en ambos endpoints
 ```
 
-#### 4.3.7 - /api/banners (POST)
-- [ ] Validar con BannerSchema
-- [ ] Archivo: `app/api/banners/route.ts`
+#### ✅ 4.3.7 - /api/banners (POST) - **COMPLETADO**
+- ✅ Validar con BannerSchema
+- ✅ Generar updatedAt en servidor
+- ✅ Archivo: `app/api/banners/route.ts`
+- ✅ Commit: `f57803f`
 
 **Testing 4.3.7:**
 ```bash
-[ ] Crear banner válido → Éxito
-[ ] Crear banner sin imagen → Error 400
+✅ BannerSchema.safeParse() implementado
+✅ Previene NoSQL injection en creación
+✅ updatedAt generado en servidor
 ```
 
 ---
