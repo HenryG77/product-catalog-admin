@@ -13,8 +13,9 @@ export default function ChangePasswordPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Verificar que existe un token temporal
-    const tempToken = localStorage.getItem('tempToken')
+    // SECURITY: Verificar que existe un token temporal en sessionStorage
+    // sessionStorage se limpia automáticamente al cerrar la pestaña
+    const tempToken = sessionStorage.getItem('tempToken')
     if (!tempToken) {
       // Si no hay token temporal, redirigir al login
       router.push('/login')
@@ -58,7 +59,8 @@ export default function ChangePasswordPage() {
     }
 
     try {
-      const tempToken = localStorage.getItem('tempToken')
+      // SECURITY: Recuperar token de sessionStorage
+      const tempToken = sessionStorage.getItem('tempToken')
 
       if (!tempToken) {
         setError('Sesión expirada. Por favor inicia sesión nuevamente.')
@@ -80,8 +82,8 @@ export default function ChangePasswordPage() {
       const data = await response.json()
 
       if (response.ok && data.success) {
-        // Limpiar el token temporal
-        localStorage.removeItem('tempToken')
+        // SECURITY: Limpiar el token temporal de sessionStorage
+        sessionStorage.removeItem('tempToken')
         setSuccess(true)
 
         // Redirigir al login después de 2 segundos

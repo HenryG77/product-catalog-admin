@@ -10,12 +10,42 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [emailError, setEmailError] = useState('')
   const router = useRouter()
+
+  // SECURITY: Validación de email en cliente
+  const validateEmail = (email: string): boolean => {
+    if (!email) {
+      setEmailError('El correo electrónico es requerido')
+      return false
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setEmailError('Por favor ingresa un correo electrónico válido')
+      return false
+    }
+
+    setEmailError('')
+    return true
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setError('')
+
+    // SECURITY: Validar email antes de enviar
+    if (!validateEmail(email)) {
+      return
+    }
+
+    // Validar que la contraseña no esté vacía
+    if (!password || password.length < 1) {
+      setError('La contraseña es requerida')
+      return
+    }
+
+    setLoading(true)
 
     try {
       const response = await fetch('/api/auth/login', {
@@ -31,8 +61,9 @@ export default function LoginPage() {
       if (response.ok && data.success) {
         // Verificar si debe cambiar la contraseña
         if (data.mustChangePassword && data.tempToken) {
-          // Guardar el token temporal y redirigir a cambio de contraseña
-          localStorage.setItem('tempToken', data.tempToken)
+          // SECURITY: Usar sessionStorage en lugar de localStorage
+          // sessionStorage se limpia automáticamente al cerrar la pestaña
+          sessionStorage.setItem('tempToken', data.tempToken)
           router.push('/change-password')
         } else {
           // Login exitoso, redirigir al admin
@@ -85,11 +116,25 @@ export default function LoginPage() {
                   autoComplete="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-9 sm:pl-10 pr-3 py-2 sm:py-2.5 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base text-gray-900"
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    if (emailError) setEmailError('')
+                  }}
+                  onBlur={() => validateEmail(email)}
+                  className={`block w-full pl-9 sm:pl-10 pr-3 py-2 sm:py-2.5 border rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 text-sm sm:text-base text-gray-900 ${
+                    emailError
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                      : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                  }`}
                   placeholder="admin@tienda.com"
                 />
               </div>
+              {/* Email Error Message */}
+              {emailError && (
+                <p className="mt-1 text-xs sm:text-sm text-red-600">
+                  {emailError}
+                </p>
+              )}
             </div>
 
             {/* Password */}
