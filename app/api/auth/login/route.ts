@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { verifyPassword, generateToken, hashPassword } from '@/lib/auth'
 import { AuthResponse, LoginRequest } from '@/lib/types'
+import { loginLimiter, getClientIp } from '@/lib/rate-limit'
 import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
@@ -14,6 +15,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Email y contraseña son requeridos' },
         { status: 400 }
+      )
+    }
+
+    // SECURITY: Rate limiting para prevenir ataques de fuerza bruta
+    // Limitar a 5 intentos de login por IP cada 15 minutos
+    const clientIp = getClientIp(request)
+    const isRateLimited = loginLimiter.check(clientIp)
+
+    if (isRateLimited) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Demasiados intentos de login. Por favor intenta nuevamente en 15 minutos.'
+        },
+        { status: 429 }
       )
     }
 
