@@ -52,10 +52,10 @@ git commit -m "Etapa X: [descripción]"
 ├─ Duración: 45 min - 1h
 └─ Estado: ✅ COMPLETADO 🎉
 
-ETAPA 4: APIs 🔴 (Alto Impacto)
+✅ ETAPA 4: APIs 🔴 (Alto Impacto)
 ├─ Validación endpoints, IDOR, upload
 ├─ Duración: 2.5-3.5h
-└─ Estado: ⏳ PENDIENTE
+└─ Estado: ✅ COMPLETADO 🎉
 
 ETAPA 5: FRONTEND 🟢 (Bajo Riesgo)
 ├─ localStorage, cookies, formularios
@@ -72,8 +72,8 @@ ETAPA 6: VALIDACIÓN FINAL 🔵 (Testing)
 
 ### 📊 PROGRESO GENERAL
 ```
-[████████████████████████░░░░] 50.0% Completado
-Etapas completadas: 3/6
+[████████████████████████████████░░░░] 66.7% Completado
+Etapas completadas: 4/6
 ```
 
 ---
@@ -677,10 +677,32 @@ if (resource.storeId !== admin.storeId) {
 
 ---
 
-### 4.6 - Rate limiting en otros endpoints críticos
-- [ ] /api/admin/users → 100 requests/min
-- [ ] /api/products → 200 requests/min
-- [ ] /api/upload → 10 uploads/hora (ya hecho en 4.2)
+### ✅ 4.6 - Rate limiting en otros endpoints críticos - **COMPLETADO** ⭐
+
+**RATE LIMITING IMPLEMENTADO:**
+✅ /api/admin/users → 100 requests/min (GET, POST)
+✅ /api/products → 200 requests/min (GET, POST)
+✅ /api/upload → 10 uploads/hora (completado en 4.2)
+
+**Archivos modificados:**
+- ✅ lib/rate-limit.ts: Agregado productsLimiter
+- ✅ app/api/admin/users/route.ts: Rate limiting en GET y POST
+- ✅ app/api/products/route.ts: Rate limiting en GET y POST
+
+**Protección:**
+🔒 Prevención de spam en endpoints de administración
+🔒 Prevención de abuso en endpoints públicos
+🔒 Respuestas 429 con mensaje user-friendly
+
+**Todos los rate limits activos:**
+- Login: 5 intentos / 15 min (4.1)
+- Upload: 10 archivos / 1 hora (4.2)
+- Admin Users: 100 requests / 1 min (4.6)
+- Products: 200 requests / 1 min (4.6)
+
+**Commit:** `47441b1` - "Etapa 4.6: Agregar rate limiting a endpoints críticos"
+**Build:** ✅ Exitoso
+**Fecha:** 2026-07-22
 
 ---
 
