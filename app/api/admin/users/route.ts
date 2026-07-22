@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { hashPassword } from '@/lib/auth'
-import { CreateUserRequest } from '@/lib/types'
-import { UserSchema } from '@/lib/validation'
+import { UserSchema, UserQuerySchema } from '@/lib/validation'
 
 /**
  * GET - Listar todos los usuarios
@@ -11,10 +10,23 @@ import { UserSchema } from '@/lib/validation'
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const search = searchParams.get('search') || ''
-    const role = searchParams.get('role') || ''
-    const active = searchParams.get('active')
 
+    // SECURITY: Validación con Zod de query parameters para prevenir NoSQL injection
+    const queryValidation = UserQuerySchema.safeParse({
+      search: searchParams.get('search'),
+      role: searchParams.get('role'),
+      active: searchParams.get('active')
+    })
+
+    if (!queryValidation.success) {
+      const errorMessage = queryValidation.error.errors[0]?.message || 'Parámetros de búsqueda inválidos'
+      return NextResponse.json(
+        { success: false, error: errorMessage },
+        { status: 400 }
+      )
+    }
+
+    const { search, role, active } = queryValidation.data
     const where: any = {}
 
     // Filtro de búsqueda por email o nombre
@@ -26,13 +38,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Filtro por rol
-    if (role && (role === 'admin' || role === 'superadmin')) {
+    if (role) {
       where.role = role
     }
 
     // Filtro por estado activo/inactivo
-    if (active !== null && active !== '') {
-      where.active = active === 'true'
+    if (active !== undefined) {
+      where.active = active
     }
 
     const users = await db.admin.findMany({
