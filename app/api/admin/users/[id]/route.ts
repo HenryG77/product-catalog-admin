@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { UpdateUserRequest } from '@/lib/types'
+import { UserUpdateSchema } from '@/lib/validation'
 
 /**
  * GET - Obtener un usuario específico
@@ -52,8 +52,20 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const body: UpdateUserRequest = await request.json()
-    const { email, name, role, active } = body
+    const body = await request.json()
+
+    // SECURITY: Validación con Zod para prevenir NoSQL injection y datos inválidos
+    const validation = UserUpdateSchema.safeParse(body)
+
+    if (!validation.success) {
+      const errorMessage = validation.error.errors[0]?.message || 'Datos inválidos'
+      return NextResponse.json(
+        { success: false, error: errorMessage },
+        { status: 400 }
+      )
+    }
+
+    const { email, name, role, active } = validation.data
 
     // Verificar que el usuario existe
     const existingUser = await db.admin.findUnique({
@@ -81,15 +93,7 @@ export async function PUT(
       }
     }
 
-    // Validar rol si se proporciona
-    if (role && role !== 'admin' && role !== 'superadmin') {
-      return NextResponse.json(
-        { success: false, error: 'Rol inválido' },
-        { status: 400 }
-      )
-    }
-
-    // Construir objeto de actualización
+    // Construir objeto de actualización (rol y active ya están validados por Zod)
     const updateData: any = {}
     if (email !== undefined) updateData.email = email.toLowerCase()
     if (name !== undefined) updateData.name = name
