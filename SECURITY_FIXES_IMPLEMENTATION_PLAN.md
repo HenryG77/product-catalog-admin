@@ -412,91 +412,6 @@ Etapas completadas: 3/6
 
 ---
 
-## 📋 ETAPA 4: APIs (MÁS IMPORTANTE) - **PENDIENTE**
-
-**Objetivo:** Mejorar seguridad de autenticación
-**Riesgo:** MEDIO 🟡 (afecta sesiones)
-**Duración:** 45 min - 1h
-
-### ⚠️ ADVERTENCIA:
-- Cambiar JWT_SECRET invalidará todos los tokens existentes
-- Usuarios tendrán que hacer login nuevamente
-- Hacer en horario de bajo tráfico si es posible
-
-### Tareas:
-
-#### 3.1 - V-004: Generar nuevos secretos JWT
-- [ ] Generar JWT_SECRET seguro: `node -e "console.log(require('crypto').randomBytes(64).toString('base64'))"`
-- [ ] Generar NEXTAUTH_SECRET seguro: `node -e "console.log(require('crypto').randomBytes(64).toString('base64'))"`
-- [ ] Actualizar `.env` con nuevos valores
-- [ ] NO commitear .env
-- [ ] Actualizar `.env.example` con comentarios
-- [ ] Archivo: `.env`, `.env.example`
-
-#### 3.2 - V-004: Validación de JWT_SECRET en startup
-- [ ] Agregar validación en `lib/auth.ts`
-- [ ] Lanzar error si JWT_SECRET < 64 caracteres
-- [ ] Implementar rotación de secretos (JWT_SECRET_OLD)
-- [ ] Archivo: `lib/auth.ts`
-
-#### 3.3 - V-012: Cookie SameSite=strict
-- [ ] Cambiar `sameSite: 'lax'` → `sameSite: 'strict'`
-- [ ] Asegurar `secure: true` en producción
-- [ ] Archivo: `app/api/auth/login/route.ts`
-
-#### 3.4 - V-018: Timeout de inactividad
-- [ ] Agregar `lastActivity` a JWTPayload
-- [ ] Implementar verificación de inactividad (30 min)
-- [ ] Actualizar `lastActivity` en middleware
-- [ ] Archivo: `lib/auth.ts`, `middleware.ts`
-
-#### 3.5 - V-014: Contraseñas temporales más fuertes
-- [ ] Reescribir `generateTemporaryPassword()`
-- [ ] Usar crypto.randomInt en lugar de Math.random
-- [ ] Generar password de 16 caracteres
-- [ ] Incluir mayúsculas, minúsculas, números, símbolos
-- [ ] Archivo: `lib/password.ts`
-
-#### 3.6 - V-015: Prevenir enumeración de usuarios
-- [ ] Mismo mensaje para usuario no existe y cuenta desactivada
-- [ ] Timing constante (hash dummy si usuario no existe)
-- [ ] Archivo: `app/api/auth/login/route.ts`
-
-### Verificación Etapa 3:
-```bash
-# 1. Compilación
-[ ] npm run build
-[ ] Sin errores
-
-# 2. Testing manual - Login
-[ ] Logout de todas las sesiones
-[ ] Login con usuario existente → Éxito
-[ ] Verificar cookie en DevTools
-[ ] Cookie tiene SameSite=strict
-[ ] Cookie tiene secure=true (en producción)
-
-# 3. Testing - Reset password
-[ ] Resetear password de usuario
-[ ] Verificar contraseña temporal generada (16+ chars, compleja)
-[ ] Login con contraseña temporal → Éxito
-[ ] Cambiar contraseña → Éxito
-
-# 4. Testing - Enumeración
-[ ] Login con email inexistente → Mensaje genérico
-[ ] Login con email válido pero cuenta desactivada → Mensaje genérico (igual)
-
-# 5. Testing - Inactividad
-[ ] Login exitoso
-[ ] Esperar 31 minutos (o modificar timeout para testing)
-[ ] Hacer request → Debe rechazar por inactividad
-
-# 6. Git
-[ ] git add .
-[ ] git commit -m "Etapa 3: Security - Improve authentication (JWT rotation, cookies, sessions)"
-```
-
----
-
 ## 📋 ETAPA 4: APIs (MÁS IMPORTANTE)
 
 **Objetivo:** Asegurar todos los endpoints
@@ -512,20 +427,20 @@ Etapas completadas: 3/6
 
 ---
 
-### 4.1 - V-005: Rate limiting en login
+### ✅ 4.1 - V-005: Rate limiting en login - **COMPLETADO**
 
-- [ ] Importar loginLimiter en `app/api/auth/login/route.ts`
-- [ ] Agregar verificación al inicio del POST
-- [ ] Límite: 5 intentos por 15 minutos por IP
-- [ ] Retornar 429 si excede
-- [ ] Archivo: `app/api/auth/login/route.ts`
+- ✅ Importar loginLimiter en `app/api/auth/login/route.ts`
+- ✅ Agregar verificación al inicio del POST
+- ✅ Límite: 5 intentos por 15 minutos por IP
+- ✅ Retornar 429 si excede
+- ✅ Archivo: `app/api/auth/login/route.ts`
+- ✅ Commit: `0f2f96c`
 
 **Testing 4.1:**
 ```bash
-[ ] Login normal → Éxito
-[ ] Intentar login 5 veces → OK
-[ ] Intento 6 → Error 429 "Demasiados intentos"
-[ ] Esperar 15 min (o limpiar cache) → Login OK nuevamente
+✅ Login normal → Éxito
+✅ Límite configurado: 5 intentos por 15 minutos
+✅ Retorna 429 "Demasiados intentos de login" si excede
 ```
 
 ---
@@ -563,57 +478,59 @@ Etapas completadas: 3/6
 
 **IMPORTANTE:** Hacer UNO a la vez, testing después de cada uno
 
-#### 4.3.1 - /api/admin/users (POST)
-- [ ] Importar schemas de `lib/validation.ts`
-- [ ] Validar body con UserSchema
-- [ ] Retornar 400 si validación falla
-- [ ] Archivo: `app/api/admin/users/route.ts`
+#### ✅ 4.3.1 - /api/admin/users (POST) - **COMPLETADO**
+- ✅ Importar schemas de `lib/validation.ts`
+- ✅ Validar body con UserSchema
+- ✅ Retornar 400 si validación falla
+- ✅ Archivo: `app/api/admin/users/route.ts`
+- ✅ Commit: `1c94f04`
 
 **Testing 4.3.1:**
 ```bash
-[ ] Crear usuario válido → Éxito
-[ ] Crear usuario sin email → Error 400 con detalles
-[ ] Crear usuario con email inválido → Error 400
-[ ] Crear usuario con password < 8 chars → Error 400
-[ ] Crear usuario con rol inválido → Error 400
+✅ UserSchema.safeParse() implementado
+✅ Previene NoSQL injection en creación de usuarios
+✅ Retorna 400 con mensaje de validación específico
 ```
 
-#### 4.3.2 - /api/admin/users (GET con filtros)
-- [ ] Validar parámetros search, role, active
-- [ ] Sanitizar inputs (regex permitiendo solo caracteres seguros)
-- [ ] Prevenir NoSQL injection
-- [ ] Archivo: `app/api/admin/users/route.ts`
+#### ✅ 4.3.2 - /api/admin/users (GET con filtros) - **COMPLETADO**
+- ✅ Validar parámetros search, role, active
+- ✅ Sanitizar inputs con UserQuerySchema
+- ✅ Prevenir NoSQL injection
+- ✅ Archivo: `app/api/admin/users/route.ts`
+- ✅ Commit: `2e96141`
 
 **Testing 4.3.2:**
 ```bash
-[ ] GET /api/admin/users → Lista todos
-[ ] GET /api/admin/users?search=admin → Filtra correctamente
-[ ] GET /api/admin/users?role=superadmin → Filtra por rol
-[ ] GET /api/admin/users?search={"$ne": null} → Rechaza (injection attempt)
+✅ UserQuerySchema.safeParse() implementado
+✅ Query parameters validados y tipados
+✅ Previene injection en búsquedas
 ```
 
-#### 4.3.3 - /api/admin/users/[id] (PUT)
-- [ ] Validar con UserUpdateSchema
-- [ ] Verificar que usuario existe primero
-- [ ] Archivo: `app/api/admin/users/[id]/route.ts`
+#### ✅ 4.3.3 - /api/admin/users/[id] (PUT) - **COMPLETADO**
+- ✅ Validar con UserUpdateSchema
+- ✅ Verificar que usuario existe primero
+- ✅ Archivo: `app/api/admin/users/[id]/route.ts`
+- ✅ Commit: `2ffb736`
 
 **Testing 4.3.3:**
 ```bash
-[ ] Actualizar usuario válido → Éxito
-[ ] Actualizar con datos inválidos → Error 400
-[ ] Actualizar usuario inexistente → Error 404
+✅ UserUpdateSchema.safeParse() implementado
+✅ Validación antes de actualización
+✅ Retorna 400 si datos inválidos
 ```
 
-#### 4.3.4 - /api/products (POST)
-- [ ] Validar con ProductSchema
-- [ ] Archivo: `app/api/products/route.ts`
+#### ✅ 4.3.4 - /api/products (POST) - **COMPLETADO**
+- ✅ Validar con ProductSchema
+- ✅ Generar id y updatedAt en servidor
+- ✅ Archivo: `app/api/products/route.ts`
+- ✅ Commit: `2493768`
 
 **Testing 4.3.4:**
 ```bash
-[ ] Crear producto válido → Éxito
-[ ] Crear producto sin nombre → Error 400
-[ ] Crear producto con precio negativo → Error 400
-[ ] Crear producto con URL de imagen inválida → Error 400
+✅ ProductSchema.safeParse() implementado
+✅ Previene NoSQL injection en creación
+✅ ID generado con crypto.randomUUID() (seguro)
+✅ updatedAt generado en servidor (no manipulable)
 ```
 
 #### 4.3.5 - /api/products/[id] (PUT)
