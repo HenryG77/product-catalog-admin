@@ -270,7 +270,8 @@ export default function CategoryPage() {
                     <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-4 line-clamp-2">{product.description}</p>
                     <button
                       onClick={() => handleWhatsAppOrder(product)}
-                      className="w-full flex items-center justify-center space-x-1 sm:space-x-2 bg-green-500 text-white py-1.5 sm:py-2 lg:py-2.5 rounded-lg hover:bg-green-600 transition-colors text-xs sm:text-sm lg:text-base"
+                      className="w-full flex items-center justify-center space-x-1 sm:space-x-2 text-white py-1.5 sm:py-2 lg:py-2.5 rounded-lg transition-colors text-xs sm:text-sm lg:text-base hover:opacity-90"
+                      style={{ backgroundColor: store?.primaryColor || '#3b82f6' }}
                     >
                       <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
                       <span className="hidden sm:inline">Pedir por WhatsApp</span>
