@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { CategorySchema } from '@/lib/validation'
+import { handleApiError } from '@/lib/error-handler'
 import crypto from 'crypto'
 
 export async function GET() {
@@ -14,8 +15,7 @@ export async function GET() {
     
     return NextResponse.json(categories)
   } catch (error) {
-    console.error('Error fetching categories:', error)
-    return NextResponse.json({ error: 'Error fetching categories' }, { status: 500 })
+    return handleApiError(error, 'GET /api/categories')
   }
 }
 
@@ -59,11 +59,7 @@ export async function POST(request: NextRequest) {
       category
     }, { status: 201 })
   } catch (error) {
-    console.error('Error creating category:', error)
-    return NextResponse.json({
-      success: false,
-      error: 'Error creating category'
-    }, { status: 500 })
+    return handleApiError(error, 'POST /api/categories')
   }
 }
 
@@ -117,10 +113,6 @@ export async function PUT(request: NextRequest) {
       category
     })
   } catch (error) {
-    console.error('Error updating category:', error)
-    return NextResponse.json({
-      success: false,
-      error: 'Error updating category'
-    }, { status: 500 })
+    return handleApiError(error, 'PUT /api/categories')
   }
 }

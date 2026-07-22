@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { ProductSchema } from '@/lib/validation'
+import { handleApiError } from '@/lib/error-handler'
 import crypto from 'crypto'
 
 export async function GET(request: NextRequest) {
@@ -18,8 +19,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(products)
   } catch (error) {
-    console.error('Error fetching products:', error)
-    return NextResponse.json({ error: 'Error fetching products' }, { status: 500 })
+    return handleApiError(error, 'GET /api/products')
   }
 }
 
@@ -68,10 +68,6 @@ export async function POST(request: NextRequest) {
       product
     }, { status: 201 })
   } catch (error) {
-    console.error('Error creating product:', error)
-    return NextResponse.json({
-      success: false,
-      error: 'Error creating product'
-    }, { status: 500 })
+    return handleApiError(error, 'POST /api/products')
   }
 }

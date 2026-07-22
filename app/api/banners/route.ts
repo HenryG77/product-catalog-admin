@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { BannerSchema } from '@/lib/validation'
+import { handleApiError } from '@/lib/error-handler'
 
 // GET /api/banners - Obtener banners activos ordenados por orden
 export async function GET(request: NextRequest) {
@@ -28,11 +29,7 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json(banners)
   } catch (error) {
-    console.error('Error fetching banners:', error)
-    return NextResponse.json(
-      { error: 'Error al obtener los banners' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'GET /api/banners')
   }
 }
 
@@ -93,11 +90,7 @@ export async function POST(request: NextRequest) {
       success: true,
       banner
     }, { status: 201 })
-  } catch (error: any) {
-    console.error('Error creating banner:', error)
-    return NextResponse.json(
-      { success: false, error: 'Error al crear el banner', details: error?.message },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleApiError(error, 'POST /api/banners')
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { verifyToken } from '@/lib/auth'
+import { handleApiError } from '@/lib/error-handler'
 
 export async function GET(request: NextRequest) {
   try {
@@ -54,10 +55,6 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Error verificando token:', error)
-    return NextResponse.json(
-      { success: false, error: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'GET /api/auth/verify')
   }
 }

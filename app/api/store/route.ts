@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { handleApiError } from '@/lib/error-handler'
 
 export async function GET() {
   try {
@@ -24,8 +25,7 @@ export async function GET() {
     
     return NextResponse.json(store)
   } catch (error) {
-    console.error('Error fetching store:', error)
-    return NextResponse.json({ error: 'Error fetching store' }, { status: 500 })
+    return handleApiError(error, 'GET /api/store')
   }
 }
 
@@ -41,8 +41,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json(store)
   } catch (error) {
-    console.error('Error updating store:', error)
-    return NextResponse.json({ error: 'Error updating store' }, { status: 500 })
+    return handleApiError(error, 'POST /api/store')
   }
 }
 
@@ -116,7 +115,6 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(store)
     }
   } catch (error) {
-    console.error('Error updating store:', error)
-    return NextResponse.json({ error: 'Error updating store' }, { status: 500 })
+    return handleApiError(error, 'PUT /api/store')
   }
 }

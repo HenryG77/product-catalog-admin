@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { verifyPassword, generateToken, hashPassword } from '@/lib/auth'
 import { AuthResponse, LoginRequest } from '@/lib/types'
 import { loginLimiter, getClientIp } from '@/lib/rate-limit'
+import { handleApiError } from '@/lib/error-handler'
 import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
@@ -138,10 +139,6 @@ export async function POST(request: NextRequest) {
     return nextResponse
 
   } catch (error) {
-    console.error('Error en login:', error)
-    return NextResponse.json(
-      { success: false, error: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'POST /api/auth/login')
   }
 }

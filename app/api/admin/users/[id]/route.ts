@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { UserUpdateSchema } from '@/lib/validation'
+import { handleApiError } from '@/lib/error-handler'
 
 /**
  * GET - Obtener un usuario específico
@@ -36,11 +37,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error('Error obteniendo usuario:', error)
-    return NextResponse.json(
-      { success: false, error: 'Error obteniendo usuario' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'GET /api/admin/users/[id]')
   }
 }
 
@@ -122,11 +119,7 @@ export async function PUT(
     })
 
   } catch (error) {
-    console.error('Error actualizando usuario:', error)
-    return NextResponse.json(
-      { success: false, error: 'Error actualizando usuario' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'PUT /api/admin/users/[id]')
   }
 }
 
@@ -175,10 +168,6 @@ export async function DELETE(
     })
 
   } catch (error) {
-    console.error('Error eliminando usuario:', error)
-    return NextResponse.json(
-      { success: false, error: 'Error eliminando usuario' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'DELETE /api/admin/users/[id]')
   }
 }

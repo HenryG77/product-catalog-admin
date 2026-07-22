@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { ProductSchema } from '@/lib/validation'
+import { handleApiError } from '@/lib/error-handler'
 
 // GET /api/products/[id] - Obtener un producto específico con imágenes
 export async function GET(
@@ -25,8 +26,7 @@ export async function GET(
     
     return NextResponse.json(product)
   } catch (error) {
-    console.error('Error fetching product:', error)
-    return NextResponse.json({ error: 'Error fetching product' }, { status: 500 })
+    return handleApiError(error, 'GET /api/products/[id]')
   }
 }
 
@@ -82,11 +82,7 @@ export async function PUT(
       product
     })
   } catch (error) {
-    console.error('Error updating product:', error)
-    return NextResponse.json({
-      success: false,
-      error: 'Error updating product'
-    }, { status: 500 })
+    return handleApiError(error, 'PUT /api/products/[id]')
   }
 }
 
@@ -105,7 +101,6 @@ export async function DELETE(
     
     return NextResponse.json({ message: 'Product deleted successfully' })
   } catch (error) {
-    console.error('Error deleting product:', error)
-    return NextResponse.json({ error: 'Error deleting product' }, { status: 500 })
+    return handleApiError(error, 'DELETE /api/products/[id]')
   }
 }

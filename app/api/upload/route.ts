@@ -10,6 +10,7 @@ import {
   ALLOWED_IMAGE_MIMES,
   IMAGE_MAGIC_BYTES
 } from '@/lib/validation'
+import { handleApiError } from '@/lib/error-handler'
 
 export async function POST(request: NextRequest) {
   try {
@@ -119,10 +120,6 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Upload error:', error)
-    return NextResponse.json({
-      success: false,
-      error: 'Upload failed'
-    }, { status: 500 })
+    return handleApiError(error, 'POST /api/upload')
   }
 }
