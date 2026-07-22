@@ -19,12 +19,20 @@ export async function GET(
         }
       }
     })
-    
+
     if (!product) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
-    
-    return NextResponse.json(product)
+
+    // Mapear stores -> store para compatibilidad con frontend
+    const response = {
+      ...product,
+      category: product.categories,
+      store: product.stores,
+      images: product.product_images
+    }
+
+    return NextResponse.json(response)
   } catch (error) {
     return handleApiError(error, 'GET /api/products/[id]')
   }
