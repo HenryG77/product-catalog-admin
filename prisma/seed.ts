@@ -53,20 +53,23 @@ async function main() {
   console.log('\n⚠️  IMPORTANTE: Cambia estas credenciales en producción!\n')
 
   // Verificar si hay tiendas, si no crear una de ejemplo
-  const storeCount = await prisma.store.count()
+  const storeCount = await prisma.stores.count()
 
   if (storeCount === 0) {
     console.log('🏪 No hay tiendas, creando tienda de ejemplo...')
 
-    const store = await prisma.store.create({
+    const { nanoid } = await import('nanoid')
+    const store = await prisma.stores.create({
       data: {
+        id: nanoid(),
         name: 'HenTech Store',
         logo: '/logo.png',
         whatsapp: '+595981234567',
         description: 'Tu tienda de tecnología de confianza',
         primaryColor: '#3b82f6',
         secondaryColor: '#1e40af',
-        footerCopyright: '© 2024 HenTech. Todos los derechos reservados.'
+        footer_copyright: '© 2024 HenTech. Todos los derechos reservados.',
+        updatedAt: new Date()
       }
     })
 

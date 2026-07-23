@@ -43,6 +43,7 @@ interface Product {
   store?: {
     id: string
     name: string
+    description: string
     whatsapp: string
     logo: string
     primaryColor: string
@@ -490,9 +491,11 @@ export default function ProductDetailPage() {
       </main>
 
       {/* Footer */}
-      <Footer 
+      <Footer
         store={{
+          id: product.store?.id || '',
           name: product.store?.name || '',
+          description: product.store?.description || '',
           whatsapp: product.store?.whatsapp || '',
           logo: product.store?.logo || '',
           primaryColor: primaryColor,

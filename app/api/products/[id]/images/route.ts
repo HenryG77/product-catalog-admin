@@ -12,7 +12,7 @@ export async function GET(
     const { id } = params
 
     const images = await db.product_images.findMany({
-      where: { productId: id },
+      where: { product_id: id },
       orderBy: { order: 'asc' }
     })
 
@@ -45,7 +45,7 @@ export async function POST(
 
     // Check current image count
     const currentCount = await db.product_images.count({
-      where: { productId: id }
+      where: { product_id: id }
     })
 
     if (currentCount + images.length > MAX_IMAGES_PER_PRODUCT) {
@@ -57,19 +57,22 @@ export async function POST(
 
     // Get max order for new images
     const lastImage = await db.product_images.findFirst({
-      where: { productId: id },
+      where: { product_id: id },
       orderBy: { order: 'desc' }
     })
     const startOrder = (lastImage?.order ?? -1) + 1
 
     // Create images
+    const { nanoid } = await import('nanoid')
     const createdImages = await db.$transaction(
       images.map((url, index) =>
         db.product_images.create({
           data: {
+            id: nanoid(),
             url,
             order: startOrder + index,
-            productId: id
+            product_id: id,
+            created_at: new Date()
           }
         })
       )

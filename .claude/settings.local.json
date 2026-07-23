@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm run build:*)",
+      "Bash(for file in models/*.ts)",
+      "Bash(do mv \"$file\" \"$file.bak\")",
+      "Bash(done)"
     ]
   }
 }

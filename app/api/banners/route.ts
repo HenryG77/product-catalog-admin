@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     // Get storeId from query param or body, or use first store as default
     let finalStoreId = storeId
     if (!finalStoreId) {
-      const firstStore = await db.store.findFirst()
+      const firstStore = await db.stores.findFirst()
       if (firstStore) {
         finalStoreId = firstStore.id
       }
@@ -59,8 +59,11 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    const { nanoid } = await import('nanoid')
+
     const banner = await db.banners.create({
       data: {
+        id: nanoid(),
         image,
         title,
         description,
@@ -69,7 +72,8 @@ export async function POST(request: NextRequest) {
         categoryId: categoryId || null,
         isActive: isActive ?? true,
         order: order ?? 0,
-        storeId: finalStoreId
+        storeId: finalStoreId,
+        updatedAt: new Date()
       },
       include: {
         category: {
