@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { hashPassword } from '@/lib/auth'
 import { generateTemporaryPassword } from '@/lib/password'
 import { ResetPasswordResponse } from '@/lib/types'
+import { handleApiError } from '@/lib/error-handler'
 
 /**
  * POST - Resetear contraseña de un usuario
@@ -49,10 +50,6 @@ export async function POST(
     return NextResponse.json(response)
 
   } catch (error) {
-    console.error('Error reseteando contraseña:', error)
-    return NextResponse.json(
-      { success: false, error: 'Error reseteando contraseña' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'POST /api/admin/users/[id]/reset-password')
   }
 }

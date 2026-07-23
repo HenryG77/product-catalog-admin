@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { hashPassword } from '@/lib/auth'
-import { CreateUserRequest } from '@/lib/types'
+import { UserSchema, UserQuerySchema } from '@/lib/validation'
+import { handleApiError } from '@/lib/error-handler'
+import { apiLimiter, getClientIp } from '@/lib/rate-limit'
 
 /**
  * GET - Listar todos los usuarios
@@ -9,11 +11,38 @@ import { CreateUserRequest } from '@/lib/types'
  */
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const search = searchParams.get('search') || ''
-    const role = searchParams.get('role') || ''
-    const active = searchParams.get('active')
+    // SECURITY: Rate limiting - 100 requests por minuto
+    const clientIp = getClientIp(request)
+    const isRateLimited = apiLimiter.check(clientIp)
 
+    if (isRateLimited) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Demasiadas solicitudes. Por favor intenta nuevamente más tarde.'
+        },
+        { status: 429 }
+      )
+    }
+
+    const { searchParams } = new URL(request.url)
+
+    // SECURITY: Validación con Zod de query parameters para prevenir NoSQL injection
+    const queryValidation = UserQuerySchema.safeParse({
+      search: searchParams.get('search'),
+      role: searchParams.get('role'),
+      active: searchParams.get('active')
+    })
+
+    if (!queryValidation.success) {
+      const errorMessage = queryValidation.error.errors[0]?.message || 'Parámetros de búsqueda inválidos'
+      return NextResponse.json(
+        { success: false, error: errorMessage },
+        { status: 400 }
+      )
+    }
+
+    const { search, role, active } = queryValidation.data
     const where: any = {}
 
     // Filtro de búsqueda por email o nombre
@@ -25,13 +54,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Filtro por rol
-    if (role && (role === 'admin' || role === 'superadmin')) {
+    if (role) {
       where.role = role
     }
 
     // Filtro por estado activo/inactivo
-    if (active !== null && active !== '') {
-      where.active = active === 'true'
+    if (active !== undefined) {
+      where.active = active
     }
 
     const users = await db.admin.findMany({
@@ -56,11 +85,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Error obteniendo usuarios:', error)
-    return NextResponse.json(
-      { success: false, error: 'Error obteniendo usuarios' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'GET /api/admin/users')
   }
 }
 
@@ -70,23 +95,34 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body: CreateUserRequest = await request.json()
-    const { email, name, password, role, active = true } = body
+    // SECURITY: Rate limiting - 100 requests por minuto
+    const clientIp = getClientIp(request)
+    const isRateLimited = apiLimiter.check(clientIp)
 
-    // Validaciones
-    if (!email || !name || !password || !role) {
+    if (isRateLimited) {
       return NextResponse.json(
-        { success: false, error: 'Todos los campos son requeridos' },
+        {
+          success: false,
+          error: 'Demasiadas solicitudes. Por favor intenta nuevamente más tarde.'
+        },
+        { status: 429 }
+      )
+    }
+
+    const body = await request.json()
+
+    // SECURITY: Validación con Zod para prevenir NoSQL injection y datos inválidos
+    const validation = UserSchema.safeParse(body)
+
+    if (!validation.success) {
+      const errorMessage = validation.error.errors[0]?.message || 'Datos inválidos'
+      return NextResponse.json(
+        { success: false, error: errorMessage },
         { status: 400 }
       )
     }
 
-    if (role !== 'admin' && role !== 'superadmin') {
-      return NextResponse.json(
-        { success: false, error: 'Rol inválido' },
-        { status: 400 }
-      )
-    }
+    const { email, name, password, role, active = true } = validation.data
 
     // Verificar si el email ya existe
     const existingUser = await db.admin.findUnique({
@@ -130,10 +166,6 @@ export async function POST(request: NextRequest) {
     }, { status: 201 })
 
   } catch (error) {
-    console.error('Error creando usuario:', error)
-    return NextResponse.json(
-      { success: false, error: 'Error creando usuario' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'POST /api/admin/users')
   }
 }

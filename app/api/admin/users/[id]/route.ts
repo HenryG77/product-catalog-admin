@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { UpdateUserRequest } from '@/lib/types'
+import { UserUpdateSchema } from '@/lib/validation'
+import { handleApiError } from '@/lib/error-handler'
 
 /**
  * GET - Obtener un usuario específico
@@ -36,11 +37,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error('Error obteniendo usuario:', error)
-    return NextResponse.json(
-      { success: false, error: 'Error obteniendo usuario' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'GET /api/admin/users/[id]')
   }
 }
 
@@ -52,8 +49,20 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const body: UpdateUserRequest = await request.json()
-    const { email, name, role, active } = body
+    const body = await request.json()
+
+    // SECURITY: Validación con Zod para prevenir NoSQL injection y datos inválidos
+    const validation = UserUpdateSchema.safeParse(body)
+
+    if (!validation.success) {
+      const errorMessage = validation.error.errors[0]?.message || 'Datos inválidos'
+      return NextResponse.json(
+        { success: false, error: errorMessage },
+        { status: 400 }
+      )
+    }
+
+    const { email, name, role, active } = validation.data
 
     // Verificar que el usuario existe
     const existingUser = await db.admin.findUnique({
@@ -81,15 +90,7 @@ export async function PUT(
       }
     }
 
-    // Validar rol si se proporciona
-    if (role && role !== 'admin' && role !== 'superadmin') {
-      return NextResponse.json(
-        { success: false, error: 'Rol inválido' },
-        { status: 400 }
-      )
-    }
-
-    // Construir objeto de actualización
+    // Construir objeto de actualización (rol y active ya están validados por Zod)
     const updateData: any = {}
     if (email !== undefined) updateData.email = email.toLowerCase()
     if (name !== undefined) updateData.name = name
@@ -118,11 +119,7 @@ export async function PUT(
     })
 
   } catch (error) {
-    console.error('Error actualizando usuario:', error)
-    return NextResponse.json(
-      { success: false, error: 'Error actualizando usuario' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'PUT /api/admin/users/[id]')
   }
 }
 
@@ -171,10 +168,6 @@ export async function DELETE(
     })
 
   } catch (error) {
-    console.error('Error eliminando usuario:', error)
-    return NextResponse.json(
-      { success: false, error: 'Error eliminando usuario' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'DELETE /api/admin/users/[id]')
   }
 }

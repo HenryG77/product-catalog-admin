@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { hashPassword, verifyToken } from '@/lib/auth'
 import { validatePassword } from '@/lib/password'
+import { handleApiError } from '@/lib/error-handler'
 
 interface ChangePasswordRequest {
   token: string
@@ -72,10 +73,6 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Error cambiando contraseña:', error)
-    return NextResponse.json(
-      { success: false, error: 'Error al cambiar la contraseña' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'POST /api/auth/change-password')
   }
 }
