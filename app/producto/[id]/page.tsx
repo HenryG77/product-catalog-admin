@@ -63,10 +63,19 @@ export default function ProductDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
   const [isWishlisted, setIsWishlisted] = useState(false)
+  const [globalStoreConfig, setGlobalStoreConfig] = useState<any>(null)
 
   useEffect(() => {
-    const fetchProduct = async () => {
+    const fetchData = async () => {
       try {
+        // Cargar configuración global de la tienda
+        const storeResponse = await fetch('/api/store')
+        if (storeResponse.ok) {
+          const storeData = await storeResponse.json()
+          setGlobalStoreConfig(storeData)
+        }
+
+        // Cargar producto
         const response = await fetch(`/api/products/${productId}`)
         if (!response.ok) {
           if (response.status === 404) {
@@ -86,7 +95,7 @@ export default function ProductDetailPage() {
     }
 
     if (productId) {
-      fetchProduct()
+      fetchData()
     }
   }, [productId])
 
@@ -232,7 +241,8 @@ export default function ProductDetailPage() {
     )
   }
 
-  const primaryColor = product.store?.primaryColor || '#3b82f6'
+  // Usar el color de la tienda del producto, o el de la configuración global, o azul como último recurso
+  const primaryColor = globalStoreConfig?.primaryColor || product.store?.primaryColor || '#3b82f6'
 
   return (
     <div className="min-h-screen bg-gray-50">

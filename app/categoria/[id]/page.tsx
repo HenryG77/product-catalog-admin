@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { Search, ShoppingCart, Phone, Home, Package, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import Footer from '@/app/components/Footer'
@@ -66,6 +66,7 @@ interface Store {
 
 export default function CategoryPage() {
   const params = useParams()
+  const router = useRouter()
   const categoryId = params.id as string
 
   const [products, setProducts] = useState<Product[]>([])
@@ -238,21 +239,27 @@ export default function CategoryPage() {
           {filteredProducts.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-5 xl:gap-6">
               {filteredProducts.map((product) => (
-                <div 
-                  key={product.id} 
-                  className="bg-white rounded-lg shadow-sm sm:shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                <div
+                  key={product.id}
+                  className="bg-white rounded-lg shadow-sm sm:shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col"
                 >
-                  <div className="aspect-square relative bg-gray-100">
+                  <div
+                    className="aspect-square relative bg-gray-100 cursor-pointer"
+                    onClick={() => router.push(`/producto/${product.id}`)}
+                  >
                     <img
                       src={product.image}
                       alt={product.name}
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute top-2 right-2 bg-green-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-bold">
+                    <div
+                      className="absolute top-2 right-2 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-bold"
+                      style={{ backgroundColor: store?.primaryColor || '#3b82f6' }}
+                    >
                       {(() => {
                         const price = product.price || 0
                         const currency = product.currency || 'PYG'
-                        
+
                         if (currency === 'PYG') {
                           return `Gs. ${price.toLocaleString('es-PY')}`
                         } else if (currency === 'USD') {
@@ -265,12 +272,20 @@ export default function CategoryPage() {
                       })()}
                     </div>
                   </div>
-                  <div className="p-2 sm:p-3 lg:p-4">
-                    <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base line-clamp-1">{product.name}</h3>
-                    <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-4 line-clamp-2">{product.description}</p>
+                  <div className="p-2 sm:p-3 lg:p-4 flex flex-col flex-grow">
+                    <div
+                      className="cursor-pointer flex-grow"
+                      onClick={() => router.push(`/producto/${product.id}`)}
+                    >
+                      <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem]">{product.name}</h3>
+                      <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-3 line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem]">{product.description}</p>
+                    </div>
                     <button
-                      onClick={() => handleWhatsAppOrder(product)}
-                      className="w-full flex items-center justify-center space-x-1 sm:space-x-2 text-white py-1.5 sm:py-2 lg:py-2.5 rounded-lg transition-colors text-xs sm:text-sm lg:text-base hover:opacity-90"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleWhatsAppOrder(product)
+                      }}
+                      className="w-full flex items-center justify-center space-x-1 sm:space-x-2 text-white py-1.5 sm:py-2 lg:py-2.5 rounded-lg transition-colors text-xs sm:text-sm lg:text-base hover:opacity-90 mt-auto"
                       style={{ backgroundColor: store?.primaryColor || '#3b82f6' }}
                     >
                       <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
