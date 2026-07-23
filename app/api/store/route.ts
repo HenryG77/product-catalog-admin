@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
+    console.log('PUT /api/store - Received body:', JSON.stringify(body, null, 2))
 
     // Get existing store first
     const existingStore = await db.stores.findFirst()
@@ -91,11 +92,15 @@ export async function PUT(request: NextRequest) {
 
       updateData.updatedAt = new Date()
 
+      console.log('PUT /api/store - Update data:', JSON.stringify(updateData, null, 2))
+
       // Update existing store with all provided fields
       const store = await db.stores.update({
         where: { id: existingStore.id },
         data: updateData
       })
+
+      console.log('PUT /api/store - Updated store:', JSON.stringify(store, null, 2))
       return NextResponse.json(store)
     } else {
       // Create new store if none exists
