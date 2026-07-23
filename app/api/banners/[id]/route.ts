@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { db } from '@/lib/db'
 
 // PUT /api/banners/:id - Actualizar banner
 export async function PUT(
@@ -13,7 +11,7 @@ export async function PUT(
     const body = await request.json()
     const { image, title, description, link, whatsappMessage, categoryId, isActive, order } = body
     
-    const banner = await prisma.banner.update({
+    const banner = await db.banners.update({
       where: { id },
       data: {
         image,
@@ -53,7 +51,7 @@ export async function DELETE(
   try {
     const { id } = params
     
-    await prisma.banner.delete({
+    await db.banners.delete({
       where: { id }
     })
     

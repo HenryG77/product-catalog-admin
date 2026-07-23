@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { db } from '@/lib/db'
 
 export async function PUT(
   request: NextRequest,
@@ -8,7 +8,7 @@ export async function PUT(
   try {
     const body = await request.json()
     
-    const category = await prisma.category.update({
+    const category = await db.categories.update({
       where: { id: params.id },
       data: body
     })
@@ -29,7 +29,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const category = await prisma.category.delete({
+    const category = await db.categories.delete({
       where: { id: params.id }
     })
     

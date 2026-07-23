@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { db } from '@/lib/db'
 
 // DELETE /api/products/images/[id] - Eliminar una imagen
 export async function DELETE(
@@ -11,7 +9,7 @@ export async function DELETE(
   try {
     const { id } = params
 
-    await prisma.productImage.delete({
+    await db.product_images.delete({
       where: { id }
     })
 
@@ -42,7 +40,7 @@ export async function PUT(
       )
     }
 
-    const updatedImage = await prisma.productImage.update({
+    const updatedImage = await db.product_images.update({
       where: { id },
       data: { order }
     })

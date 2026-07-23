@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { db } from '@/lib/db'
 
 // GET /api/banners - Obtener banners activos ordenados por orden
 export async function GET(request: NextRequest) {
@@ -11,7 +9,7 @@ export async function GET(request: NextRequest) {
     
     const where = all ? {} : { isActive: true }
     
-    const banners = await prisma.banner.findMany({
+    const banners = await db.banners.findMany({
       where,
       orderBy: [
         { order: 'asc' },
@@ -48,7 +46,7 @@ export async function POST(request: NextRequest) {
     // Get storeId from query param or body, or use first store as default
     let finalStoreId = storeId
     if (!finalStoreId) {
-      const firstStore = await prisma.store.findFirst()
+      const firstStore = await db.store.findFirst()
       if (firstStore) {
         finalStoreId = firstStore.id
       }
@@ -61,7 +59,7 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const banner = await prisma.banner.create({
+    const banner = await db.banners.create({
       data: {
         image,
         title,

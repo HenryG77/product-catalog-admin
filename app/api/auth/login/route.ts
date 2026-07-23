@@ -1,53 +1,120 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { db } from '@/lib/db'
+import { verifyPassword, generateToken } from '@/lib/auth'
+import { AuthResponse, LoginRequest } from '@/lib/types'
+import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const body: LoginRequest = await request.json()
     const { email, password } = body
 
-    // Validación simple
+    // Validación
     if (!email || !password) {
       return NextResponse.json(
-        { error: 'Email y contraseña son requeridos' },
+        { success: false, error: 'Email y contraseña son requeridos' },
         { status: 400 }
       )
     }
 
-    // Credenciales de demo
-    const DEMO_EMAIL = 'admin@tienda.com'
-    const DEMO_PASSWORD = 'admin123'
+    // Buscar usuario en la base de datos
+    const admin = await db.admin.findUnique({
+      where: { email: email.toLowerCase() }
+    })
 
-    if (email === DEMO_EMAIL && password === DEMO_PASSWORD) {
-      // Login exitoso
-      const response = NextResponse.json({
-        success: true,
-        message: 'Login exitoso',
-        admin: {
-          id: 'admin-001',
-          email: DEMO_EMAIL,
-          name: 'Administrador Principal'
+    if (!admin) {
+      return NextResponse.json(
+        { success: false, error: 'Credenciales inválidas' },
+        { status: 401 }
+      )
+    }
+
+    // Verificar si el usuario está activo
+    if (!admin.active) {
+      return NextResponse.json(
+        { success: false, error: 'Tu cuenta ha sido desactivada. Contacta al administrador.' },
+        { status: 403 }
+      )
+    }
+
+    // Verificar contraseña
+    const isValidPassword = await verifyPassword(password, admin.password)
+
+    if (!isValidPassword) {
+      return NextResponse.json(
+        { success: false, error: 'Credenciales inválidas' },
+        { status: 401 }
+      )
+    }
+
+    // Si el usuario debe cambiar su contraseña (contraseña temporal)
+    if (admin.mustChangePassword) {
+      // Invalidar la contraseña temporal inmediatamente
+      await db.admin.update({
+        where: { id: admin.id },
+        data: {
+          password: crypto.randomUUID(), // Contraseña aleatoria que el usuario no conoce
+          mustChangePassword: false // Ya se usó la contraseña temporal
         }
       })
 
-      // Setear cookie simple
-      response.cookies.set('auth-token', 'demo-token-for-testing', {
-        maxAge: 24 * 60 * 60,
-        path: '/'
+      // Generar token temporal de corta duración solo para cambio de contraseña
+      const tempToken = generateToken({
+        id: admin.id,
+        email: admin.email,
+        name: admin.name,
+        role: admin.role
       })
 
-      return response
+      // Retornar respuesta indicando que debe cambiar la contraseña
+      const response: AuthResponse = {
+        success: true,
+        message: 'Debes cambiar tu contraseña',
+        mustChangePassword: true,
+        tempToken
+      }
+
+      return NextResponse.json(response)
     }
 
-    // Para otras credenciales, rechazar por ahora
-    return NextResponse.json(
-      { error: 'Usa credenciales de demo: admin@tienda.com / admin123' },
-      { status: 401 }
-    )
+    // Login normal - Generar JWT
+    const token = generateToken({
+      id: admin.id,
+      email: admin.email,
+      name: admin.name,
+      role: admin.role
+    })
+
+    // Preparar respuesta
+    const response: AuthResponse = {
+      success: true,
+      message: 'Login exitoso',
+      user: {
+        id: admin.id,
+        email: admin.email,
+        name: admin.name,
+        role: admin.role as 'superadmin' | 'admin',
+        active: admin.active
+      }
+    }
+
+    const nextResponse = NextResponse.json(response)
+
+    // Setear cookie con JWT
+    nextResponse.cookies.set('auth-token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 días
+      path: '/'
+    })
+
+    return nextResponse
 
   } catch (error) {
     console.error('Error en login:', error)
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { success: false, error: 'Error interno del servidor' },
       { status: 500 }
     )
   }
