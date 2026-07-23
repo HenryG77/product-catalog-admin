@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { verifyPassword, generateToken } from '@/lib/auth'
+import { verifyPassword, generateToken, hashPassword } from '@/lib/auth'
 import { AuthResponse, LoginRequest } from '@/lib/types'
 import crypto from 'crypto'
 
@@ -22,25 +22,34 @@ export async function POST(request: NextRequest) {
       where: { email: email.toLowerCase() }
     })
 
+    // SECURITY: Prevención de enumeración de usuarios
+    // Si el usuario no existe, ejecutar un hash dummy para mantener timing constante
+    // Esto previene timing attacks que podrían revelar si un email existe o no
     if (!admin) {
+      // Hash dummy con misma complejidad que bcrypt para timing constante
+      await hashPassword('dummy-password-for-timing-attack-prevention')
+
+      // Mensaje genérico que no revela si el usuario existe
       return NextResponse.json(
         { success: false, error: 'Credenciales inválidas' },
         { status: 401 }
       )
     }
 
-    // Verificar si el usuario está activo
-    if (!admin.active) {
-      return NextResponse.json(
-        { success: false, error: 'Tu cuenta ha sido desactivada. Contacta al administrador.' },
-        { status: 403 }
-      )
-    }
-
-    // Verificar contraseña
+    // Verificar contraseña ANTES de verificar si está activo
+    // Esto previene revelar el estado de la cuenta sin credenciales válidas
     const isValidPassword = await verifyPassword(password, admin.password)
 
     if (!isValidPassword) {
+      return NextResponse.json(
+        { success: false, error: 'Credenciales inválidas' },
+        { status: 401 }
+      )
+    }
+
+    // Verificar si el usuario está activo DESPUÉS de validar credenciales
+    // Usar el mismo mensaje genérico para no revelar información
+    if (!admin.active) {
       return NextResponse.json(
         { success: false, error: 'Credenciales inválidas' },
         { status: 401 }
@@ -101,10 +110,11 @@ export async function POST(request: NextRequest) {
     const nextResponse = NextResponse.json(response)
 
     // Setear cookie con JWT
+    // SECURITY: SameSite=strict previene CSRF attacks
     nextResponse.cookies.set('auth-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict',
       maxAge: 60 * 60 * 24 * 7, // 7 días
       path: '/'
     })
